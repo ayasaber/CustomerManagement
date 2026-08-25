@@ -1,5 +1,7 @@
 using CustomerManagement.Api.Endpoints.Customers;
+using CustomerManagement.Api.Infrastructure.Auth;
 using CustomerManagement.Api.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +11,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<CustomerManagementDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("CustomerManagement")));
+builder.Services
+    .AddAuthentication(HeaderAuthenticationDefaults.SchemeName)
+    .AddScheme<AuthenticationSchemeOptions, HeaderAuthenticationHandler>(
+        HeaderAuthenticationDefaults.SchemeName,
+        _ => { });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AgentOnly", policy =>
+        policy.RequireAuthenticatedUser()
+            .RequireRole("agent"));
+});
 
 var app = builder.Build();
 
@@ -19,6 +32,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGet("/health/db", async (CustomerManagementDbContext dbContext) =>
 {
@@ -53,3 +68,5 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+public partial class Program;
