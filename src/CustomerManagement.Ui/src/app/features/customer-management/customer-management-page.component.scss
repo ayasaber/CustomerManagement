@@ -1,0 +1,142 @@
+:host {
+  display: block;
+  min-height: calc(100vh - 90px);
+  background:
+    radial-gradient(circle at top right, rgba(15, 76, 129, 0.18), transparent 45%),
+    linear-gradient(160deg, #f8f4ea 0%, #efe7d4 100%);
+  color: #2e2a24;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.workspace {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 1.25rem 1.1rem 1.8rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  background: #fff8ea;
+  border: 1px solid #dacdb6;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.hero p {
+  margin: 0.25rem 0 0;
+  color: #5f594f;
+}
+
+.role-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.role-switch button {
+  border: 1px solid #8e8474;
+  border-radius: 999px;
+  background: #fff9ec;
+  color: #3b342d;
+  padding: 0.25rem 0.8rem;
+}
+
+.role-switch button.active {
+  background: #1d5c63;
+  color: #fff;
+  border-color: #1d5c63;
+}
+
+.toolbar {
+  background: #fff8e8;
+  border: 1px solid #dbcdb4;
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+}
+
+.lookup-form {
+  display: grid;
+  grid-template-columns: 85px 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.lookup-form label {
+  font-weight: 600;
+}
+
+.lookup-form input {
+  width: 100%;
+  border: 1px solid #bfb5a2;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.lookup-form button {
+  border: 0;
+  border-radius: 999px;
+  background: #0f4c81;
+  color: #fff;
+  padding: 0.55rem 1rem;
+}
+
+.status {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+}
+
+.status-stack {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.loading {
+  background: #fff6d6;
+}
+
+.error {
+  background: #fde3dc;
+  border: 1px solid #edb6aa;
+}
+
+.success {
+  background: #def4e4;
+  border: 1px solid #b3dfbf;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .lookup-form {
+    grid-template-columns: 1fr;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

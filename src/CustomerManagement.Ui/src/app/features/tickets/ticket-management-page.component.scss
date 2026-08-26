@@ -1,0 +1,109 @@
+.tickets-page {
+  display: grid;
+  gap: 1rem;
+}
+
+header h2 {
+  margin: 0;
+}
+
+header p {
+  margin: 0.25rem 0 0;
+  color: #5f6b7a;
+}
+
+.panel-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.panel {
+  border: 1px solid #d7dfe8;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #ffffff;
+}
+
+.panel h3 {
+  margin-top: 0;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid #c4d0de;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+
+button {
+  border: 1px solid #113a56;
+  border-radius: 8px;
+  background: #113a56;
+  color: #fff;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+}
+
+.status.error {
+  background: #ffe6e6;
+  color: #8a1b1b;
+}
+
+.status.success {
+  background: #e7f8ee;
+  color: #1f6a37;
+}
+
+.list-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.list-panel th,
+.list-panel td {
+  border-bottom: 1px solid #e1e7ee;
+  text-align: left;
+  padding: 0.55rem;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.empty {
+  margin: 0;
+  color: #6d7b89;
+}
+
+.history-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.history-list small {
+  color: #6d7b89;
+}

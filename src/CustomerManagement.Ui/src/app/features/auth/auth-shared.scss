@@ -1,0 +1,127 @@
+:host {
+  display: block;
+}
+
+.auth-screen {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(255, 178, 132, 0.25), transparent 35%),
+    radial-gradient(circle at 12% 20%, rgba(121, 208, 255, 0.25), transparent 30%),
+    linear-gradient(180deg, #f4f8ff 0%, #ffffff 45%, #f7fbf9 100%);
+  padding: clamp(1.2rem, 2.4vw, 2.6rem);
+}
+
+.auth-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 1.2rem;
+}
+
+.auth-panel,
+.auth-form-panel {
+  background: #ffffff;
+  border: 1px solid #dbe6f3;
+  border-radius: 20px;
+  box-shadow: 0 20px 45px rgba(18, 38, 63, 0.08);
+  padding: clamp(1.1rem, 2vw, 1.8rem);
+}
+
+.auth-eyebrow {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: #5d6b80;
+}
+
+.auth-title {
+  margin: 0.6rem 0 0.4rem;
+  color: #092042;
+  font-size: clamp(1.4rem, 2.1vw, 2rem);
+  font-weight: 800;
+}
+
+.auth-subtitle {
+  margin: 0;
+  color: #4e607b;
+  line-height: 1.6;
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 0.4rem;
+  color: #203556;
+  font-weight: 600;
+}
+
+.auth-form input {
+  border: 1px solid #c5d4e8;
+  border-radius: 12px;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.95rem;
+}
+
+.auth-form input:focus {
+  outline: 2px solid #59a5ff;
+  outline-offset: 0;
+  border-color: #59a5ff;
+}
+
+.primary-btn {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(125deg, #ff7a30, #ff934f);
+  color: #fff;
+  padding: 0.7rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ghost-btn {
+  border: 1px solid #c7d3e5;
+  border-radius: 12px;
+  background: #fff;
+  color: #233555;
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-status {
+  margin: 0;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.auth-status.error {
+  background: #ffe7e7;
+  color: #971b1b;
+}
+
+.auth-status.success {
+  background: #e7fff2;
+  color: #11613f;
+}
+
+.auth-alt {
+  margin-top: 1rem;
+  color: #4e607b;
+}
+
+.auth-alt a {
+  color: #0b5db8;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,6 +1,0 @@
-Sample attachment content for customer record.
-
-/squad-plan customer-management  --copy
-
-squad-plan security-administration  --copy
-squad new-plan --copy

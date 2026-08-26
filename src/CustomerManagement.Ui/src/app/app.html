@@ -1,0 +1,27 @@
+<header class="app-shell" *ngIf="showShell()">
+	<div class="app-shell__brand">
+		<a routerLink="/" class="brand-link">Customer Support CRM</a>
+	</div>
+
+	<nav class="app-shell__nav" *ngIf="navItems().length > 0">
+		<a
+			*ngFor="let item of navItems()"
+			[routerLink]="item.link"
+			routerLinkActive="active-link"
+			[routerLinkActiveOptions]="{ exact: false }">
+			{{ item.label }}
+		</a>
+	</nav>
+
+	<div class="app-shell__account" *ngIf="currentUser() as user">
+		<span class="account-pill" [attr.aria-label]="'Signed in as ' + user.email">
+			<span class="avatar">{{ userInitial() }}</span>
+			<span class="email">{{ user.email }}</span>
+		</span>
+		<button type="button" class="logout-btn" (click)="logout()">Logout</button>
+	</div>
+</header>
+
+<main class="app-main" [class.with-shell]="showShell()">
+	<router-outlet></router-outlet>
+</main>

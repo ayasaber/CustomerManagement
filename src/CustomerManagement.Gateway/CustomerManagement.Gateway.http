@@ -1,0 +1,156 @@
+@GatewayHost = http://localhost:57916
+@AgentRole = agent
+@CustomerId = 75f05a60-4505-47bb-8d26-f2530d30c440
+@MissingCustomerId = 00000000-0000-0000-0000-000000000000
+@AttachmentId = 86381386-a98b-40ac-82e8-a4301aa93005
+@NonAgentRole = viewer
+
+### Health check for downstream API (direct check, not via gateway)
+GET http://localhost:5215/health/db
+Accept: application/json
+
+###
+
+### Create customer profile through gateway (POST /api/customers)
+POST {{GatewayHost}}/api/customers
+Accept: application/json
+Content-Type: application/json
+X-User-Role: {{AgentRole}}
+
+{
+	"name": "Aya Gateway",
+	"company": "Contoso",
+	"contactDetails": [
+		{
+			"channel": 1,
+			"value": "aya.gateway@contoso.com",
+			"label": "work",
+			"isPrimary": true
+		}
+	]
+}
+
+###
+
+### Profile by customer id through gateway
+GET {{GatewayHost}}/api/customers/{{CustomerId}}
+Accept: application/json
+X-User-Role: {{AgentRole}}
+
+###
+
+### Update customer profile through gateway (PUT /api/customers/{customerId})
+### Replace rowVersion with latest value from a GET response when needed.
+PUT {{GatewayHost}}/api/customers/{{CustomerId}}
+Accept: application/json
+Content-Type: application/json
+X-User-Role: {{AgentRole}}
+
+{
+	"name": "Aya Gateway Updated",
+	"company": "Contoso Support",
+	"rowVersion": "AAAAAAAAB9E=",
+	"contactDetails": [
+		{
+			"channel": 1,
+			"value": "aya.updated@contoso.com",
+			"label": "work",
+			"isPrimary": true
+		}
+	]
+}
+
+###
+
+### Get customer contact details through gateway
+GET {{GatewayHost}}/api/customers/{{CustomerId}}/contact-details
+Accept: application/json
+X-User-Role: {{AgentRole}}
+
+###
+
+### Add customer note through gateway (POST /notes)
+POST {{GatewayHost}}/api/customers/{{CustomerId}}/notes
+Accept: application/json
+Content-Type: application/json
+X-User-Role: {{AgentRole}}
+
+{
+	"body": "Customer follow-up captured via gateway route surface."
+}
+
+###
+
+### List customer notes through gateway (GET /notes)
+GET {{GatewayHost}}/api/customers/{{CustomerId}}/notes
+Accept: application/json
+X-User-Role: {{AgentRole}}
+
+###
+
+### Upload customer attachment through gateway (POST /attachments)
+POST {{GatewayHost}}/api/customers/{{CustomerId}}/attachments
+Accept: application/json
+X-User-Role: {{AgentRole}}
+Content-Type: multipart/form-data; boundary=GatewayUploadBoundary
+
+--GatewayUploadBoundary
+Content-Disposition: form-data; name="file"; filename="gateway-note.txt"
+Content-Type: text/plain
+
+Sample attachment uploaded via gateway.
+--GatewayUploadBoundary--
+
+###
+
+### List customer attachments through gateway (GET /attachments)
+GET {{GatewayHost}}/api/customers/{{CustomerId}}/attachments
+Accept: application/json
+X-User-Role: {{AgentRole}}
+
+###
+
+### Download customer attachment content through gateway
+GET {{GatewayHost}}/api/customers/{{CustomerId}}/attachments/{{AttachmentId}}/content
+X-User-Role: {{AgentRole}}
+
+###
+
+### Get interaction history through gateway (default pagination)
+GET {{GatewayHost}}/api/customers/{{CustomerId}}/interaction-history
+Accept: application/json
+X-User-Role: {{AgentRole}}
+
+###
+
+### Get interaction history through gateway (filters + pagination)
+GET {{GatewayHost}}/api/customers/{{CustomerId}}/interaction-history?page=1&pageSize=20&channel=email&direction=inbound
+Accept: application/json
+X-User-Role: {{AgentRole}}
+
+###
+
+### Validate downstream validation propagation (expected 400)
+GET {{GatewayHost}}/api/customers/{{CustomerId}}/interaction-history?channel=fax
+Accept: application/json
+X-User-Role: {{AgentRole}}
+
+###
+
+### Validate downstream not found propagation (expected 404)
+GET {{GatewayHost}}/api/customers/{{MissingCustomerId}}/interaction-history
+Accept: application/json
+X-User-Role: {{AgentRole}}
+
+###
+
+### Validate unauthorized propagation when header is missing (expected 401)
+GET {{GatewayHost}}/api/customers/{{CustomerId}}
+Accept: application/json
+
+###
+
+### Validate forbidden propagation for non-agent role (expected 403)
+GET {{GatewayHost}}/api/customers/{{CustomerId}}
+Accept: application/json
+X-User-Role: {{NonAgentRole}}

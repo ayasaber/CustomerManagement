@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "CustomerManagement.Gateway": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "http://localhost:5101"
+    }
+  }
+}

@@ -1,0 +1,155 @@
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable, catchError, throwError } from 'rxjs';
+import {
+  ApiValidationError,
+  CreateTicketCategoryRequest,
+  CreateTicketPriorityRequest,
+  CreateTicketRequest,
+  TicketCategoryResponse,
+  TicketHistoryResponse,
+  TicketListResponse,
+  TicketPriorityResponse,
+  TicketResponse,
+  UpdateTicketCategoryRequest,
+  UpdateTicketPriorityRequest,
+  UpdateTicketStatusRequest
+} from '../models/ticket-management.models';
+import { AuthService } from './auth.service';
+
+@Injectable({ providedIn: 'root' })
+export class TicketManagementApiService {
+  private readonly baseUrl = 'http://localhost:5101/api/tickets';
+
+  constructor(
+    private readonly http: HttpClient,
+    private readonly authService: AuthService
+  ) {}
+
+  listTickets(page = 1, pageSize = 25): Observable<TicketListResponse> {
+    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.get<TicketListResponse>(this.baseUrl, { headers: this.buildHeaders(), params })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  createTicket(request: CreateTicketRequest): Observable<TicketResponse> {
+    return this.authService
+      .withAutoRefresh(() => this.http.post<TicketResponse>(this.baseUrl, request, { headers: this.buildHeaders() }))
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  getTicket(ticketId: string): Observable<TicketResponse> {
+    return this.authService
+      .withAutoRefresh(() => this.http.get<TicketResponse>(`${this.baseUrl}/${ticketId}`, { headers: this.buildHeaders() }))
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  updateStatus(ticketId: string, request: UpdateTicketStatusRequest): Observable<TicketResponse> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.put<TicketResponse>(`${this.baseUrl}/${ticketId}/status`, request, { headers: this.buildHeaders() })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  listCategories(activeOnly = false): Observable<TicketCategoryResponse[]> {
+    const params = activeOnly ? new HttpParams().set('activeOnly', true) : undefined;
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.get<TicketCategoryResponse[]>(`${this.baseUrl}/categories`, { headers: this.buildHeaders(), params })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  createCategory(request: CreateTicketCategoryRequest): Observable<TicketCategoryResponse> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.post<TicketCategoryResponse>(`${this.baseUrl}/categories`, request, { headers: this.buildHeaders() })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  updateCategory(categoryId: string, request: UpdateTicketCategoryRequest): Observable<TicketCategoryResponse> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.put<TicketCategoryResponse>(`${this.baseUrl}/categories/${categoryId}`, request, {
+          headers: this.buildHeaders()
+        })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  listPriorities(activeOnly = false): Observable<TicketPriorityResponse[]> {
+    const params = activeOnly ? new HttpParams().set('activeOnly', true) : undefined;
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.get<TicketPriorityResponse[]>(`${this.baseUrl}/priorities`, { headers: this.buildHeaders(), params })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  createPriority(request: CreateTicketPriorityRequest): Observable<TicketPriorityResponse> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.post<TicketPriorityResponse>(`${this.baseUrl}/priorities`, request, { headers: this.buildHeaders() })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  updatePriority(priorityId: string, request: UpdateTicketPriorityRequest): Observable<TicketPriorityResponse> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.put<TicketPriorityResponse>(`${this.baseUrl}/priorities/${priorityId}`, request, {
+          headers: this.buildHeaders()
+        })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  getHistory(ticketId: string): Observable<TicketHistoryResponse> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.get<TicketHistoryResponse>(`${this.baseUrl}/${ticketId}/history`, { headers: this.buildHeaders() })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  private buildHeaders(): HttpHeaders {
+    const accessToken = this.authService.accessToken();
+    return accessToken
+      ? new HttpHeaders({ Authorization: `Bearer ${accessToken}` })
+      : new HttpHeaders();
+  }
+
+  private mapError(error: unknown): Observable<never> {
+    if (error instanceof Error && !(error instanceof HttpErrorResponse)) {
+      return throwError(() => error);
+    }
+
+    const httpError = error as HttpErrorResponse;
+    if (httpError.status === 0) {
+      return throwError(() => new Error('Gateway is unreachable. Ensure UI, gateway, and API are running.'));
+    }
+
+    if (httpError.status === 401) {
+      return throwError(() => new Error('Your session expired. Please sign in again.'));
+    }
+
+    if (httpError.status === 403) {
+      return throwError(() => new Error('You do not have permission to perform this action.'));
+    }
+
+    const payload = httpError.error as (ApiValidationError & { detail?: string; message?: string }) | null;
+    const validationMessage = payload?.errors
+      ? Object.entries(payload.errors)
+          .map(([key, values]) => `${key}: ${values.join(', ')}`)
+          .join(' | ')
+      : null;
+
+    const message = validationMessage || payload?.detail || payload?.message || payload?.title || httpError.message || 'Request failed';
+    return throwError(() => new Error(message));
+  }
+}

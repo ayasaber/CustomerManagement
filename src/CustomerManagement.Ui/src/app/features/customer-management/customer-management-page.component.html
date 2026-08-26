@@ -1,0 +1,48 @@
+<section class="workspace">
+  <header class="hero">
+    <div>
+      <h1>Customer Management Workspace</h1>
+      <p>Agent-focused UI routed through the gateway surface.</p>
+    </div>
+    <div class="role-switch">
+      <span>Role:</span>
+      <button type="button" (click)="setRole('agent')" [class.active]="effectiveRole() === 'agent'">agent</button>
+      <button type="button" (click)="setRole('viewer')" [class.active]="effectiveRole() === 'viewer'">viewer</button>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <form [formGroup]="lookupForm" (ngSubmit)="loadCustomer()" class="lookup-form">
+      <label for="customerId">Customer Id</label>
+      <input id="customerId" formControlName="customerId" placeholder="guid" />
+      <button type="submit" [disabled]="lookupForm.invalid || loading()">Load</button>
+    </form>
+  </section>
+
+  <div class="status-stack" *ngIf="loading() || error() || success()">
+    <p class="status loading" *ngIf="loading()">Loading data...</p>
+    <p class="status error" *ngIf="error()">{{ error() }}</p>
+    <p class="status success" *ngIf="success()">{{ success() }}</p>
+  </div>
+
+  <div class="grid">
+    <app-customer-profile-form
+      [profile]="profile()"
+      (createRequested)="createProfile($event)"
+      (updateRequested)="updateProfile($event)">
+    </app-customer-profile-form>
+
+    <app-customer-contact-details [contactDetails]="contactDetails()"></app-customer-contact-details>
+
+    <app-customer-interaction-history [items]="interactionItems()"></app-customer-interaction-history>
+
+    <app-customer-notes [notes]="notes()" (noteAdded)="addNote($event)"></app-customer-notes>
+
+    <app-customer-attachments
+      [attachments]="attachments()"
+      [customerId]="lookupForm.controls.customerId.value"
+      (downloadRequested)="downloadAttachment($event)"
+      (fileSelected)="uploadAttachment($event)">
+    </app-customer-attachments>
+  </div>
+</section>

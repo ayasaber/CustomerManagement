@@ -1,0 +1,416 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/customers",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/customers",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/customers/{customerId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/customers/{customerId}",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/customers/{customerId}/contact-details",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/customers/{customerId}/contact-details",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/customers/{customerId}/notes",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/customers/{customerId}/notes",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/customers/{customerId}/attachments",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/customers/{customerId}/attachments",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/customers/{customerId}/attachments/{attachmentId}/content",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/customers/{customerId}/attachments/{attachmentId}/content",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/customers/{customerId}/interaction-history",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/customers/{customerId}/interaction-history",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/categories",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/categories",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/categories/{categoryId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/categories/{categoryId}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/priorities",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/priorities",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/priorities/{priorityId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/priorities/{priorityId}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/{ticketId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/{ticketId}",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/{ticketId}/status",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/{ticketId}/status",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/{ticketId}/assign",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/{ticketId}/assign",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/{ticketId}/self-assign",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/{ticketId}/self-assign",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/{ticketId}/escalate",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/{ticketId}/escalate",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/{ticketId}/reopen",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/{ticketId}/reopen",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/tickets/{ticketId}/history",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tickets/{ticketId}/history",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/auth/register",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/auth/register",
+      "UpstreamHttpMethod": [ "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/auth/login",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/auth/login",
+      "UpstreamHttpMethod": [ "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/auth/refresh",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/auth/refresh",
+      "UpstreamHttpMethod": [ "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/auth/logout",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/auth/logout",
+      "UpstreamHttpMethod": [ "POST" ]
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5101"
+  }
+}

@@ -1,0 +1,121 @@
+:root {
+	color-scheme: light;
+	font-family: 'Segoe UI', 'Trebuchet MS', 'Verdana', sans-serif;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	background: #f3f8fc;
+	color: #132843;
+}
+
+.app-shell {
+	position: sticky;
+	top: 0;
+	z-index: 30;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.75rem 1.4rem;
+	border-bottom: 1px solid #d2deea;
+	background: linear-gradient(90deg, #f7fbff, #eef7ff 52%, #f9f5ea);
+}
+
+.brand-link {
+	color: #163256;
+	text-decoration: none;
+	font-weight: 800;
+	letter-spacing: 0.01em;
+}
+
+.app-shell__nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.app-shell__nav a {
+	text-decoration: none;
+	color: #19456f;
+	font-weight: 600;
+	padding: 0.4rem 0.7rem;
+	border-radius: 999px;
+}
+
+.app-shell__nav a.active-link,
+.app-shell__nav a:hover {
+	background: #d8e9fb;
+	color: #0f3760;
+}
+
+.app-shell__account {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+
+.account-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	padding: 0.25rem 0.55rem 0.25rem 0.3rem;
+	border-radius: 999px;
+	border: 1px solid #c5d8ec;
+	background: #fff;
+}
+
+.avatar {
+	width: 1.65rem;
+	height: 1.65rem;
+	border-radius: 50%;
+	display: inline-grid;
+	place-items: center;
+	font-weight: 800;
+	color: #fff;
+	background: #1e6d9e;
+}
+
+.email {
+	font-size: 0.86rem;
+	color: #213a57;
+}
+
+.logout-btn {
+	border: 1px solid #d5b39c;
+	background: #fff4ea;
+	color: #843d13;
+	border-radius: 999px;
+	padding: 0.45rem 0.78rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.logout-btn:hover {
+	background: #ffe9d9;
+}
+
+.app-main.with-shell {
+	padding: 0.8rem 0.9rem 1.4rem;
+}
+
+@media (max-width: 930px) {
+	.app-shell {
+		grid-template-columns: 1fr;
+	}
+
+	.app-shell__account {
+		justify-content: flex-start;
+	}
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+}

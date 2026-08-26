@@ -1,0 +1,112 @@
+<section class="tickets-page">
+  <header>
+    <h2>Ticket Management</h2>
+    <p>Create, track, and transition customer support tickets.</p>
+  </header>
+
+  <p class="status error" *ngIf="error()">{{ error() }}</p>
+  <p class="status success" *ngIf="success()">{{ success() }}</p>
+
+  <div class="panel-grid">
+    <form [formGroup]="createForm" (ngSubmit)="createTicket()" class="panel">
+      <h3>Create Ticket</h3>
+      <label>
+        Customer Id
+        <input type="text" formControlName="customerId" placeholder="00000000-0000-0000-0000-000000000000" />
+      </label>
+      <label>
+        Category
+        <select formControlName="categoryId">
+          <option value="">Select category</option>
+          <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
+        </select>
+      </label>
+      <label>
+        Priority
+        <select formControlName="priorityId">
+          <option value="">Select priority</option>
+          <option *ngFor="let priority of priorities()" [value]="priority.id">{{ priority.name }}</option>
+        </select>
+      </label>
+      <label>
+        Subject
+        <input type="text" formControlName="subject" maxlength="200" />
+      </label>
+      <label>
+        Description
+        <textarea formControlName="description" rows="4" maxlength="4000"></textarea>
+      </label>
+      <button type="submit" [disabled]="createForm.invalid || loading()">Create Ticket</button>
+    </form>
+
+    <form [formGroup]="statusForm" (ngSubmit)="updateStatus()" class="panel">
+      <h3>Transition Status</h3>
+      <label>
+        Ticket
+        <select formControlName="ticketId">
+          <option value="">Select ticket from current list</option>
+          <option *ngFor="let ticket of tickets()" [value]="ticket.id">{{ ticket.id }} - {{ ticket.subject }}</option>
+        </select>
+      </label>
+      <label>
+        Target Status
+        <select formControlName="targetStatus">
+          <option value="in_progress">In Progress</option>
+          <option value="waiting_on_customer">Waiting On Customer</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+      </label>
+      <button type="submit" [disabled]="statusForm.invalid || loading()">Update Status</button>
+    </form>
+  </div>
+
+  <section class="panel list-panel">
+    <div class="panel-head">
+      <h3>Tickets</h3>
+      <button type="button" (click)="loadTickets()" [disabled]="loading()">Refresh</button>
+    </div>
+
+    <table *ngIf="tickets().length > 0; else noTickets">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Subject</th>
+          <th>Status</th>
+          <th>Category</th>
+          <th>Priority</th>
+          <th>Escalated</th>
+          <th>Status Action</th>
+          <th>History</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ticket of tickets()">
+          <td>{{ ticket.id }}</td>
+          <td>{{ ticket.subject }}</td>
+          <td>{{ ticket.status }}</td>
+          <td>{{ ticket.categoryName }}</td>
+          <td>{{ ticket.priorityName }}</td>
+          <td>{{ ticket.isEscalated ? 'Yes' : 'No' }}</td>
+          <td><button type="button" (click)="selectTicketForStatus(ticket.id)">Use</button></td>
+          <td><button type="button" (click)="loadHistory(ticket.id)">Load</button></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #noTickets>
+      <p class="empty">No tickets available yet.</p>
+    </ng-template>
+  </section>
+
+  <section class="panel" *ngIf="selectedHistory().length > 0">
+    <h3>Selected Ticket History</h3>
+    <ul class="history-list">
+      <li *ngFor="let item of selectedHistory()">
+        <strong>{{ item.actionType }}</strong>
+        <span>{{ item.fieldName }}: {{ item.oldValue ?? '-' }} -> {{ item.newValue ?? '-' }}</span>
+        <small>{{ item.occurredAtUtc | date: 'short' }}</small>
+      </li>
+    </ul>
+  </section>
+</section>
