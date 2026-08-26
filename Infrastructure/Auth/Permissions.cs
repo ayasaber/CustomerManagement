@@ -9,4 +9,11 @@ public static class Permissions
     public const string SettingsManage = "settings.manage";
     public const string CustomersRead = "customers.read";
     public const string CustomersWrite = "customers.write";
+
+    public const string TicketsRead = "tickets.read";
+    public const string TicketsWrite = "tickets.write";
+    public const string TicketsAssign = "tickets.assign";
+    public const string TicketsEscalate = "tickets.escalate";
+    public const string TicketsClose = "tickets.close";
+    public const string TicketTaxonomyManage = "tickets.taxonomy.manage";
 }

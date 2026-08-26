@@ -1,4 +1,5 @@
 using CustomerManagement.Api.Domain.Security;
+using CustomerManagement.Api.Domain.Tickets;
 using CustomerManagement.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +56,7 @@ public static class IdentitySeedData
 
         await EnsurePermissionsAsync(dbContext, cancellationToken: default);
         await EnsureSystemSettingsAsync(dbContext, cancellationToken: default);
+        await EnsureTicketTaxonomyAsync(dbContext, cancellationToken: default);
     }
 
     private static async Task EnsureRoleAsync(RoleManager<IdentityRole<Guid>> roleManager, string roleName)
@@ -82,7 +84,13 @@ public static class IdentitySeedData
             [Permissions.AuditRead] = "Read audit records.",
             [Permissions.SettingsManage] = "Manage system settings.",
             [Permissions.CustomersRead] = "Read customer records.",
-            [Permissions.CustomersWrite] = "Create and update customer records."
+            [Permissions.CustomersWrite] = "Create and update customer records.",
+            [Permissions.TicketsRead] = "Read ticket records.",
+            [Permissions.TicketsWrite] = "Create and update tickets.",
+            [Permissions.TicketsAssign] = "Assign tickets to agents.",
+            [Permissions.TicketsEscalate] = "Escalate tickets.",
+            [Permissions.TicketsClose] = "Resolve and close tickets.",
+            [Permissions.TicketTaxonomyManage] = "Manage ticket categories and priorities."
         };
 
         var existingPermissions = await dbContext.Permissions
@@ -126,9 +134,24 @@ public static class IdentitySeedData
                 Permissions.AuditRead,
                 Permissions.SettingsManage,
                 Permissions.CustomersRead,
-                Permissions.CustomersWrite
+                Permissions.CustomersWrite,
+                Permissions.TicketsRead,
+                Permissions.TicketsWrite,
+                Permissions.TicketsAssign,
+                Permissions.TicketsEscalate,
+                Permissions.TicketsClose,
+                Permissions.TicketTaxonomyManage
             ],
-            [AuthRoles.Agent] = [Permissions.CustomersRead, Permissions.CustomersWrite],
+            [AuthRoles.Agent] =
+            [
+                Permissions.CustomersRead,
+                Permissions.CustomersWrite,
+                Permissions.TicketsRead,
+                Permissions.TicketsWrite,
+                Permissions.TicketsAssign,
+                Permissions.TicketsEscalate,
+                Permissions.TicketsClose
+            ],
             [AuthRoles.Customer] = []
         };
 
@@ -200,6 +223,83 @@ public static class IdentitySeedData
                 Description = row.Value.Description,
                 UpdatedAtUtc = now,
                 UpdatedByUserId = null
+            });
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task EnsureTicketTaxonomyAsync(CustomerManagementDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var defaultCategories = new (string Name, string? Description)[]
+        {
+            ("General Inquiry", "General support requests and non-specialized issues."),
+            ("Technical Issue", "Bugs, errors, and product malfunction reports."),
+            ("Billing", "Invoices, payments, and subscription billing concerns."),
+            ("Account Access", "Login, verification, and account access problems."),
+            ("Feature Request", "Requests for product improvements and new capabilities.")
+        };
+
+        var defaultPriorities = new (string Name, int SortOrder)[]
+        {
+            ("Low", 10),
+            ("Normal", 20),
+            ("High", 30),
+            ("Urgent", 40)
+        };
+
+        var existingCategoryNames = await dbContext.TicketCategories
+            .AsNoTracking()
+            .Select(row => row.Name)
+            .ToListAsync(cancellationToken);
+
+        var categoryNameSet = existingCategoryNames
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var now = DateTime.UtcNow;
+        foreach (var category in defaultCategories)
+        {
+            if (categoryNameSet.Contains(category.Name))
+            {
+                continue;
+            }
+
+            dbContext.TicketCategories.Add(new TicketCategory
+            {
+                Id = Guid.NewGuid(),
+                Name = category.Name,
+                Description = category.Description,
+                IsActive = true,
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now
+            });
+        }
+
+        var existingPriorityNames = await dbContext.TicketPriorities
+            .AsNoTracking()
+            .Select(row => row.Name)
+            .ToListAsync(cancellationToken);
+
+        var priorityNameSet = existingPriorityNames
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var priority in defaultPriorities)
+        {
+            if (priorityNameSet.Contains(priority.Name))
+            {
+                continue;
+            }
+
+            dbContext.TicketPriorities.Add(new TicketPriority
+            {
+                Id = Guid.NewGuid(),
+                Name = priority.Name,
+                SortOrder = priority.SortOrder,
+                IsActive = true,
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now
             });
         }
 

@@ -3,6 +3,7 @@ using CustomerManagement.Api.Domain.Security;
 using CustomerManagement.Api.Endpoints.Admin;
 using CustomerManagement.Api.Endpoints.Auth;
 using CustomerManagement.Api.Endpoints.Customers;
+using CustomerManagement.Api.Endpoints.Tickets;
 using CustomerManagement.Api.Infrastructure.Attachments;
 using CustomerManagement.Api.Infrastructure.Auditing;
 using CustomerManagement.Api.Infrastructure.Auth;
@@ -87,7 +88,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -101,6 +105,9 @@ app.MapCustomerProfileEndpoints();
 app.MapCustomerNoteEndpoints();
 app.MapCustomerAttachmentEndpoints();
 app.MapCustomerInteractionHistoryEndpoints();
+app.MapTicketCategoryEndpoints();
+app.MapTicketPriorityEndpoints();
+app.MapTicketEndpoints();
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
 app.MapPermissionsEndpoints();

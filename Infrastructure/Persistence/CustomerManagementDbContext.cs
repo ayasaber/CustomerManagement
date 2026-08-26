@@ -1,5 +1,6 @@
 using CustomerManagement.Api.Domain.Customers;
 using CustomerManagement.Api.Domain.Security;
+using CustomerManagement.Api.Domain.Tickets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,14 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
     public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
 
     public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+
+    public DbSet<Ticket> Tickets => Set<Ticket>();
+
+    public DbSet<TicketCategory> TicketCategories => Set<TicketCategory>();
+
+    public DbSet<TicketPriority> TicketPriorities => Set<TicketPriority>();
+
+    public DbSet<TicketHistoryEntry> TicketHistoryEntries => Set<TicketHistoryEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -313,6 +322,127 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
 
             entity.HasIndex(i => new { i.CustomerId, i.OccurredAtUtc });
             entity.HasIndex(i => new { i.CustomerId, i.Channel, i.Direction, i.OccurredAtUtc });
+        });
+
+        modelBuilder.Entity<TicketCategory>(entity =>
+        {
+            entity.ToTable("TicketCategories");
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+            entity.Property(c => c.Description)
+                .HasMaxLength(500);
+            entity.Property(c => c.IsActive)
+                .IsRequired();
+            entity.Property(c => c.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(c => c.UpdatedAtUtc)
+                .IsRequired();
+            entity.Property(c => c.RowVersion)
+                .IsRowVersion();
+
+            entity.HasIndex(c => c.Name)
+                .IsUnique();
+        });
+
+        modelBuilder.Entity<TicketPriority>(entity =>
+        {
+            entity.ToTable("TicketPriorities");
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+            entity.Property(p => p.SortOrder)
+                .IsRequired();
+            entity.Property(p => p.IsActive)
+                .IsRequired();
+            entity.Property(p => p.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(p => p.UpdatedAtUtc)
+                .IsRequired();
+            entity.Property(p => p.RowVersion)
+                .IsRowVersion();
+
+            entity.HasIndex(p => p.Name)
+                .IsUnique();
+            entity.HasIndex(p => p.SortOrder);
+        });
+
+        modelBuilder.Entity<Ticket>(entity =>
+        {
+            entity.ToTable("Tickets");
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.Subject)
+                .HasMaxLength(200)
+                .IsRequired();
+            entity.Property(t => t.Description)
+                .HasMaxLength(4000)
+                .IsRequired();
+            entity.Property(t => t.Status)
+                .HasConversion<int>()
+                .IsRequired();
+            entity.Property(t => t.IsEscalated)
+                .IsRequired();
+            entity.Property(t => t.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(t => t.UpdatedAtUtc)
+                .IsRequired();
+            entity.Property(t => t.RowVersion)
+                .IsRowVersion();
+
+            entity.HasOne(t => t.Customer)
+                .WithMany()
+                .HasForeignKey(t => t.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.AssignedToUser)
+                .WithMany()
+                .HasForeignKey(t => t.AssignedToUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(t => t.Category)
+                .WithMany(c => c.Tickets)
+                .HasForeignKey(t => t.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.Priority)
+                .WithMany(p => p.Tickets)
+                .HasForeignKey(t => t.PriorityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(t => new { t.CustomerId, t.CreatedAtUtc });
+            entity.HasIndex(t => new { t.Status, t.CreatedAtUtc });
+            entity.HasIndex(t => new { t.AssignedToUserId, t.Status, t.CreatedAtUtc });
+            entity.HasIndex(t => t.CategoryId);
+            entity.HasIndex(t => t.PriorityId);
+        });
+
+        modelBuilder.Entity<TicketHistoryEntry>(entity =>
+        {
+            entity.ToTable("TicketHistoryEntries");
+            entity.HasKey(h => h.Id);
+            entity.Property(h => h.ActionType)
+                .HasMaxLength(100)
+                .IsRequired();
+            entity.Property(h => h.FieldName)
+                .HasMaxLength(100)
+                .IsRequired();
+            entity.Property(h => h.OldValue)
+                .HasMaxLength(500);
+            entity.Property(h => h.NewValue)
+                .HasMaxLength(500);
+            entity.Property(h => h.ActorEmail)
+                .HasMaxLength(320);
+            entity.Property(h => h.OccurredAtUtc)
+                .IsRequired();
+
+            entity.HasOne(h => h.Ticket)
+                .WithMany(t => t.HistoryEntries)
+                .HasForeignKey(h => h.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(h => new { h.TicketId, h.OccurredAtUtc });
         });
     }
 }

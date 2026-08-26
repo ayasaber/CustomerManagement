@@ -4,6 +4,7 @@ using CustomerManagement.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CustomerManagement.Api.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CustomerManagementDbContext))]
-    partial class CustomerManagementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260826144915_Story13TicketManagement")]
+    partial class Story13TicketManagement
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
