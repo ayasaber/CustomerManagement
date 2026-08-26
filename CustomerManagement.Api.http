@@ -1,10 +1,66 @@
 @CustomerManagement.Api_HostAddress = http://localhost:5215
-@AgentRole = agent
+@AgentEmail = agent.manual@crm.local
+@AgentPassword = Agent!23456
+@AgentAccessToken = paste-access-token-after-login
+@CustomerEmail = customer.manual@crm.local
+@CustomerPassword = Customer!23456
+@CustomerAccessToken = paste-customer-access-token-after-login
 @CustomerId = 75F05A60-4505-47BB-8D26-F2530D30C440
 @RowVersion = AAAAAAAAJx4=
 @AttachmentId = 86381386-a98b-40ac-82e8-a4301aa93005
 @MissingCustomerId = 00000000-0000-0000-0000-000000000000
-@NonAgentRole = viewer
+
+### Register agent account (Story 06)
+POST {{CustomerManagement.Api_HostAddress}}/api/auth/register
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "{{AgentEmail}}",
+  "password": "{{AgentPassword}}",
+  "confirmPassword": "{{AgentPassword}}",
+  "displayName": "Manual Agent",
+  "accountType": "agent"
+}
+
+###
+
+### Login as agent (Story 06) and copy accessToken into AgentAccessToken
+POST {{CustomerManagement.Api_HostAddress}}/api/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "{{AgentEmail}}",
+  "password": "{{AgentPassword}}"
+}
+
+###
+
+### Register customer account (Story 06)
+POST {{CustomerManagement.Api_HostAddress}}/api/auth/register
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "{{CustomerEmail}}",
+  "password": "{{CustomerPassword}}",
+  "confirmPassword": "{{CustomerPassword}}",
+  "displayName": "Manual Customer",
+  "accountType": "customer"
+}
+
+###
+
+### Login as customer (Story 06) and copy accessToken into CustomerAccessToken
+POST {{CustomerManagement.Api_HostAddress}}/api/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "{{CustomerEmail}}",
+  "password": "{{CustomerPassword}}"
+}
 
 ### Health check (DB)
 GET {{CustomerManagement.Api_HostAddress}}/health/db
@@ -16,49 +72,49 @@ Accept: application/json
 ### Default pagination applies when page/pageSize are omitted.
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/interaction-history
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
 ### Get customer interaction history with pagination (Story 03 - Task 3)
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/interaction-history?page=1&pageSize=20
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
 ### Get customer interaction history filtered by channel and direction (Story 03 - Task 4)
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/interaction-history?channel=email&direction=inbound
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
 ### Get customer interaction history with alternate normalized channel value (Story 03 - Task 4)
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/interaction-history?channel=livechat&direction=outbound
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
 ### Invalid interaction history filter should return 400 validation problem (Story 03 - Task 4)
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/interaction-history?channel=fax
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
 ### Missing customer interaction history should return 404 (Story 03 - Task 2)
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{MissingCustomerId}}/interaction-history
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
 ### Forbidden role should return 403 (Story 03 - Task 5)
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/interaction-history
 Accept: application/json
-X-User-Role: {{NonAgentRole}}
+Authorization: Bearer {{CustomerAccessToken}}
 
 ###
 
@@ -72,7 +128,7 @@ Accept: application/json
 POST {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/notes
 Accept: application/json
 Content-Type: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 {
   "body": "Customer called and confirmed receipt of onboarding email."
@@ -83,7 +139,7 @@ X-User-Role: {{AgentRole}}
 ### List customer notes (Story 02 - Task 2)
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/notes
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
@@ -91,7 +147,7 @@ X-User-Role: {{AgentRole}}
 ### Keep content type in the allowed list configured in appsettings.json.
 POST {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/attachments
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 Content-Type: multipart/form-data; boundary=UploadBoundary
 
 --UploadBoundary
@@ -106,14 +162,14 @@ Sample attachment content for customer record -v2.
 ### List customer attachments (Story 02 - Task 4)
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/attachments
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
 ### Download customer attachment content (Story 02 - Task 5)
 ### Replace AttachmentId with an id from the list attachments response.
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/attachments/{{AttachmentId}}/content
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
@@ -121,7 +177,7 @@ X-User-Role: {{AgentRole}}
 POST {{CustomerManagement.Api_HostAddress}}/api/customers
 Accept: application/json
 Content-Type: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 {
   "name": "Aya Saber",
@@ -147,14 +203,14 @@ X-User-Role: {{AgentRole}}
 ### Get customer profile by id
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
 ### Get customer contact details by id
 GET {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}/contact-details
 Accept: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 ###
 
@@ -162,7 +218,7 @@ X-User-Role: {{AgentRole}}
 PUT {{CustomerManagement.Api_HostAddress}}/api/customers/{{CustomerId}}
 Accept: application/json
 Content-Type: application/json
-X-User-Role: {{AgentRole}}
+Authorization: Bearer {{AgentAccessToken}}
 
 {
   "name": "Aya Saber Updated",

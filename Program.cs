@@ -1,9 +1,17 @@
+using System.Text;
+using CustomerManagement.Api.Domain.Security;
+using CustomerManagement.Api.Endpoints.Admin;
+using CustomerManagement.Api.Endpoints.Auth;
 using CustomerManagement.Api.Endpoints.Customers;
 using CustomerManagement.Api.Infrastructure.Attachments;
+using CustomerManagement.Api.Infrastructure.Auditing;
 using CustomerManagement.Api.Infrastructure.Auth;
 using CustomerManagement.Api.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,22 +20,66 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<CustomerManagementDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("CustomerManagement")));
+builder.Services
+    .AddIdentityCore<ApplicationUser>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = true;
+    })
+    .AddRoles<IdentityRole<Guid>>()
+    .AddEntityFrameworkStores<CustomerManagementDbContext>()
+    .AddSignInManager();
+
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey) || jwtOptions.SigningKey.Length < 32)
+{
+    throw new InvalidOperationException("Jwt:SigningKey must be configured and at least 32 characters long.");
+}
+
+builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<IAuditLogWriter, AuditLogWriter>();
 builder.Services.Configure<AttachmentStorageOptions>(
     builder.Configuration.GetSection(AttachmentStorageOptions.SectionName));
 builder.Services.AddSingleton<IAttachmentStorage, LocalFileSystemAttachmentStorage>();
 builder.Services
-    .AddAuthentication(HeaderAuthenticationDefaults.SchemeName)
-    .AddScheme<AuthenticationSchemeOptions, HeaderAuthenticationHandler>(
-        HeaderAuthenticationDefaults.SchemeName,
-        _ => { });
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30)
+        };
+    });
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AgentOnly", policy =>
         policy.RequireAuthenticatedUser()
-            .RequireRole("agent"));
+            .RequireRole(AuthRoles.Agent));
+
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAuthenticatedUser()
+            .RequireAssertion(context =>
+                context.User.IsInRole(AuthRoles.Admin) ||
+                context.User.HasClaim("permission", Permissions.UsersManage)));
 });
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 var app = builder.Build();
+
+await IdentitySeedData.EnsureSeededAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -49,6 +101,11 @@ app.MapCustomerProfileEndpoints();
 app.MapCustomerNoteEndpoints();
 app.MapCustomerAttachmentEndpoints();
 app.MapCustomerInteractionHistoryEndpoints();
+app.MapAuthEndpoints();
+app.MapUsersEndpoints();
+app.MapPermissionsEndpoints();
+app.MapAuditLogEndpoints();
+app.MapSystemSettingsEndpoints();
 
 var summaries = new[]
 {

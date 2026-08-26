@@ -1,5 +1,6 @@
 using CustomerManagement.Api.Contracts.Customers;
 using CustomerManagement.Api.Domain.Customers;
+using CustomerManagement.Api.Infrastructure.Auth;
 using CustomerManagement.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +11,8 @@ public static class CustomerProfileEndpoints
 {
     public static IEndpointRouteBuilder MapCustomerProfileEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/customers")
-            .RequireAuthorization("AgentOnly");
+        var group = app.MapGroup("/api/customers");
+        // TODO(Story-09): when customer deletion endpoint is added, capture an audit event via IAuditLogWriter.
 
         group.MapPost("", async (
             [FromBody] CreateCustomerProfileRequest request,
@@ -54,6 +55,7 @@ public static class CustomerProfileEndpoints
 
             return Results.Created($"/api/customers/{customer.Id}", response);
         })
+        .RequireAuthorization("Permission:" + Permissions.CustomersWrite)
         .WithName("CreateCustomerProfile")
         .WithSummary("Create a customer profile with optional contact details");
 
@@ -71,6 +73,7 @@ public static class CustomerProfileEndpoints
 
             return Results.Ok(MapToCustomerProfileResponse(customer));
         })
+        .RequireAuthorization("Permission:" + Permissions.CustomersRead)
         .WithName("GetCustomerProfile")
         .WithSummary("Get a customer profile by id");
 
@@ -147,6 +150,7 @@ public static class CustomerProfileEndpoints
 
             return Results.Ok(MapToCustomerProfileResponse(updatedCustomer));
         })
+        .RequireAuthorization("Permission:" + Permissions.CustomersWrite)
         .WithName("UpdateCustomerProfile")
         .WithSummary("Update an existing customer profile by id");
 
@@ -179,6 +183,7 @@ public static class CustomerProfileEndpoints
             var response = new CustomerContactDetailsResponse(customerId, contactDetails);
             return Results.Ok(response);
         })
+        .RequireAuthorization("Permission:" + Permissions.CustomersRead)
         .WithName("GetCustomerContactDetails")
         .WithSummary("Get all contact details for a customer by id");
 

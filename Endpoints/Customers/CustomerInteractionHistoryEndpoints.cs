@@ -1,5 +1,6 @@
 using CustomerManagement.Api.Contracts.Customers;
 using CustomerManagement.Api.Domain.Customers;
+using CustomerManagement.Api.Infrastructure.Auth;
 using CustomerManagement.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,8 +10,7 @@ public static class CustomerInteractionHistoryEndpoints
 {
     public static IEndpointRouteBuilder MapCustomerInteractionHistoryEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/customers")
-            .RequireAuthorization("AgentOnly");
+        var group = app.MapGroup("/api/customers");
 
         group.MapGet("/{customerId:guid}/interaction-history", async (
             Guid customerId,
@@ -78,6 +78,7 @@ public static class CustomerInteractionHistoryEndpoints
 
             return Results.Ok(response);
         })
+        .RequireAuthorization("Permission:" + Permissions.CustomersRead)
         .WithName("GetCustomerInteractionHistory")
         .WithSummary("Get read-only interaction history for a customer with filters and pagination");
 

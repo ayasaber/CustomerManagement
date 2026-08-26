@@ -1,5 +1,6 @@
 using CustomerManagement.Api.Contracts.Customers;
 using CustomerManagement.Api.Domain.Customers;
+using CustomerManagement.Api.Infrastructure.Auth;
 using CustomerManagement.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +11,7 @@ public static class CustomerNoteEndpoints
 {
     public static IEndpointRouteBuilder MapCustomerNoteEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/customers")
-            .RequireAuthorization("AgentOnly");
+        var group = app.MapGroup("/api/customers");
 
         group.MapPost("/{customerId:guid}/notes", async (
             Guid customerId,
@@ -55,6 +55,7 @@ public static class CustomerNoteEndpoints
             var response = MapToResponse(note);
             return Results.Created($"/api/customers/{customerId}/notes/{note.Id}", response);
         })
+        .RequireAuthorization("Permission:" + Permissions.CustomersWrite)
         .WithName("CreateCustomerNote")
         .WithSummary("Add a note to a customer record");
 
@@ -85,6 +86,7 @@ public static class CustomerNoteEndpoints
 
             return Results.Ok(notes);
         })
+        .RequireAuthorization("Permission:" + Permissions.CustomersRead)
         .WithName("ListCustomerNotes")
         .WithSummary("List notes for a customer record");
 

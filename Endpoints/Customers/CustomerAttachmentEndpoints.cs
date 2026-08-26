@@ -1,6 +1,7 @@
 using CustomerManagement.Api.Contracts.Customers;
 using CustomerManagement.Api.Domain.Customers;
 using CustomerManagement.Api.Infrastructure.Attachments;
+using CustomerManagement.Api.Infrastructure.Auth;
 using CustomerManagement.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,8 +13,7 @@ public static class CustomerAttachmentEndpoints
 {
     public static IEndpointRouteBuilder MapCustomerAttachmentEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/customers")
-            .RequireAuthorization("AgentOnly");
+        var group = app.MapGroup("/api/customers");
 
         group.MapPost("/{customerId:guid}/attachments", async (
             Guid customerId,
@@ -81,6 +81,7 @@ public static class CustomerAttachmentEndpoints
         })
         .WithName("CreateCustomerAttachment")
         .WithSummary("Upload an attachment to a customer record")
+        .RequireAuthorization("Permission:" + Permissions.CustomersWrite)
         .Accepts<IFormFile>("multipart/form-data")
         .DisableAntiforgery();
 
@@ -115,6 +116,7 @@ public static class CustomerAttachmentEndpoints
 
             return Results.Ok(attachments);
         })
+        .RequireAuthorization("Permission:" + Permissions.CustomersRead)
         .WithName("ListCustomerAttachments")
         .WithSummary("List attachments for a customer record");
 
@@ -150,6 +152,7 @@ public static class CustomerAttachmentEndpoints
                 return Results.NotFound();
             }
         })
+        .RequireAuthorization("Permission:" + Permissions.CustomersRead)
         .WithName("GetCustomerAttachmentContent")
         .WithSummary("Retrieve a customer attachment binary content");
 
