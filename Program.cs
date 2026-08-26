@@ -1,4 +1,5 @@
 using CustomerManagement.Api.Endpoints.Customers;
+using CustomerManagement.Api.Infrastructure.Attachments;
 using CustomerManagement.Api.Infrastructure.Auth;
 using CustomerManagement.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
@@ -11,6 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<CustomerManagementDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("CustomerManagement")));
+builder.Services.Configure<AttachmentStorageOptions>(
+    builder.Configuration.GetSection(AttachmentStorageOptions.SectionName));
+builder.Services.AddSingleton<IAttachmentStorage, LocalFileSystemAttachmentStorage>();
 builder.Services
     .AddAuthentication(HeaderAuthenticationDefaults.SchemeName)
     .AddScheme<AuthenticationSchemeOptions, HeaderAuthenticationHandler>(
@@ -42,6 +46,9 @@ app.MapGet("/health/db", async (CustomerManagementDbContext dbContext) =>
 });
 
 app.MapCustomerProfileEndpoints();
+app.MapCustomerNoteEndpoints();
+app.MapCustomerAttachmentEndpoints();
+app.MapCustomerInteractionHistoryEndpoints();
 
 var summaries = new[]
 {

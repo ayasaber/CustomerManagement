@@ -80,6 +80,11 @@ public static class CustomerProfileEndpoints
             CustomerManagementDbContext dbContext) =>
         {
             var errors = Validate(request.Name, request.Company, request.ContactDetails);
+            if (request.RowVersion is null)
+            {
+                errors["rowVersion"] = ["RowVersion is required."];
+            }
+
             if (errors.Count > 0)
             {
                 return Results.ValidationProblem(errors);
@@ -97,6 +102,7 @@ public static class CustomerProfileEndpoints
             customer.Name = request.Name.Trim();
             customer.Company = string.IsNullOrWhiteSpace(request.Company) ? null : request.Company.Trim();
             customer.UpdatedAtUtc = DateTime.UtcNow;
+            dbContext.Entry(customer).Property(c => c.RowVersion).OriginalValue = request.RowVersion!;
 
             if (request.ContactDetails is not null)
             {
@@ -120,7 +126,19 @@ public static class CustomerProfileEndpoints
                 }
             }
 
-            await dbContext.SaveChangesAsync();
+            try
+            {
+                await dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Results.Conflict(new ProblemDetails
+                {
+                    Title = "Concurrency conflict",
+                    Detail = "Customer profile was updated by another request. Refresh and retry with the latest RowVersion.",
+                    Status = StatusCodes.Status409Conflict
+                });
+            }
 
             var updatedCustomer = await dbContext.Customers
                 .AsNoTracking()
@@ -188,6 +206,7 @@ public static class CustomerProfileEndpoints
             customer.Company,
             customer.CreatedAtUtc,
             customer.UpdatedAtUtc,
+            customer.RowVersion,
             orderedDetails);
     }
 

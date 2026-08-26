@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="CustomerManagement.Api.csproj" />
+  <Project Path="..\CustomerManagement.Gateway\CustomerManagement.Gateway.csproj" />
 </Solution>

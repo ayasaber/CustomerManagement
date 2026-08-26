@@ -6,6 +6,7 @@ public sealed record CustomerProfileResponse(
     string? Company,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
+    byte[] RowVersion,
     IReadOnlyList<CustomerContactDetailResponse> ContactDetails);
 
 public sealed record CustomerContactDetailResponse(

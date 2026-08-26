@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace CustomerManagement.Api.Domain.Customers;
 
 public sealed class Customer
@@ -12,5 +14,14 @@ public sealed class Customer
 
     public DateTime UpdatedAtUtc { get; set; }
 
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = [];
+
     public List<ContactDetail> ContactDetails { get; set; } = [];
+
+    public List<CustomerNote> Notes { get; set; } = [];
+
+    public List<CustomerAttachment> Attachments { get; set; } = [];
+
+    public List<CustomerInteractionEvent> InteractionEvents { get; set; } = [];
 }

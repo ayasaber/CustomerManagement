@@ -4,6 +4,7 @@ using CustomerManagement.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CustomerManagement.Api.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CustomerManagementDbContext))]
-    partial class CustomerManagementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825121033_AddCustomerNotesAndAttachmentMetadata")]
+    partial class AddCustomerNotesAndAttachmentMetadata
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -133,48 +136,6 @@ namespace CustomerManagement.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("CustomerAttachments", (string)null);
                 });
 
-            modelBuilder.Entity("CustomerManagement.Api.Domain.Customers.CustomerInteractionEvent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Channel")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Direction")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("OccurredAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ProjectedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SourceRef")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("SourceSystem")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Summary")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId", "OccurredAtUtc");
-
-                    b.HasIndex("CustomerId", "Channel", "Direction", "OccurredAtUtc");
-
-                    b.ToTable("CustomerInteractionEvents", (string)null);
-                });
-
             modelBuilder.Entity("CustomerManagement.Api.Domain.Customers.CustomerNote", b =>
                 {
                     b.Property<Guid>("Id")
@@ -226,17 +187,6 @@ namespace CustomerManagement.Api.Infrastructure.Persistence.Migrations
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("CustomerManagement.Api.Domain.Customers.CustomerInteractionEvent", b =>
-                {
-                    b.HasOne("CustomerManagement.Api.Domain.Customers.Customer", "Customer")
-                        .WithMany("InteractionEvents")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-                });
-
             modelBuilder.Entity("CustomerManagement.Api.Domain.Customers.CustomerNote", b =>
                 {
                     b.HasOne("CustomerManagement.Api.Domain.Customers.Customer", "Customer")
@@ -253,8 +203,6 @@ namespace CustomerManagement.Api.Infrastructure.Persistence.Migrations
                     b.Navigation("Attachments");
 
                     b.Navigation("ContactDetails");
-
-                    b.Navigation("InteractionEvents");
 
                     b.Navigation("Notes");
                 });
