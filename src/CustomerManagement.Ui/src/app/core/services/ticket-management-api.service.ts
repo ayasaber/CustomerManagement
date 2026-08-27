@@ -161,13 +161,17 @@ export class TicketManagementApiService {
     }
 
     const payload = httpError.error as (ApiValidationError & { detail?: string; message?: string }) | null;
+    const problemDetail =
+      payload && typeof payload === 'object' && 'detail' in payload && typeof payload.detail === 'string'
+        ? payload.detail
+        : null;
     const validationMessage = payload?.errors
       ? Object.entries(payload.errors)
           .map(([key, values]) => `${key}: ${values.join(', ')}`)
           .join(' | ')
       : null;
 
-    const message = validationMessage || payload?.detail || payload?.message || payload?.title || httpError.message || 'Request failed';
+    const message = validationMessage || problemDetail || payload?.message || payload?.title || httpError.message || 'Request failed';
     return throwError(() => new Error(message));
   }
 }

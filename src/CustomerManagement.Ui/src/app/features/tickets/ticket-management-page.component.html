@@ -11,8 +11,13 @@
     <form [formGroup]="createForm" (ngSubmit)="createTicket()" class="panel">
       <h3>Create Ticket</h3>
       <label *ngIf="!isCustomer()">
-        Customer User Id
-        <input type="text" formControlName="customerUserId" placeholder="00000000-0000-0000-0000-000000000000" />
+        Customer
+        <select formControlName="customerUserId">
+          <option value="">Select customer</option>
+          <option *ngFor="let customer of customerOptions()" [value]="customer.applicationUserId">
+            {{ customer.name }}
+          </option>
+        </select>
       </label>
       <p *ngIf="isCustomer()" class="hint">Customer profile will be bound automatically from your logged-in account.</p>
       <label>
@@ -44,7 +49,7 @@
       <h3>Transition Status</h3>
       <label>
         Ticket
-        <select formControlName="ticketId">
+        <select formControlName="ticketId" (change)="onSelectedTicketChanged()">
           <option value="">Select ticket from current list</option>
           <option *ngFor="let ticket of tickets()" [value]="ticket.id">{{ ticket.id }} - {{ ticket.subject }}</option>
         </select>
@@ -52,10 +57,7 @@
       <label>
         Target Status
         <select formControlName="targetStatus">
-          <option value="in_progress">In Progress</option>
-          <option value="waiting_on_customer">Waiting On Customer</option>
-          <option value="resolved">Resolved</option>
-          <option value="closed">Closed</option>
+          <option *ngFor="let status of getAvailableTargetStatuses()" [value]="status.value">{{ status.label }}</option>
         </select>
       </label>
       <div class="status-actions">

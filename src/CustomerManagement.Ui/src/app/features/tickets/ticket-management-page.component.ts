@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { CustomerListItemResponse } from '../../core/models/customer-management.models';
 import {
   TicketCategoryResponse,
   TicketHistoryItemResponse,
@@ -9,6 +10,7 @@ import {
   TicketPriorityResponse
 } from '../../core/models/ticket-management.models';
 import { AuthService } from '../../core/services/auth.service';
+import { CustomerManagementApiService } from '../../core/services/customer-management-api.service';
 import { TicketManagementApiService } from '../../core/services/ticket-management-api.service';
 
 @Component({
@@ -19,10 +21,13 @@ import { TicketManagementApiService } from '../../core/services/ticket-managemen
   styleUrl: './ticket-management-page.component.scss'
 })
 export class TicketManagementPageComponent implements OnInit {
+  private static readonly customerPageSize = 200;
+
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
 
   readonly tickets = signal<TicketListItemResponse[]>([]);
+  readonly customerOptions = signal<CustomerListItemResponse[]>([]);
   readonly categories = signal<TicketCategoryResponse[]>([]);
   readonly priorities = signal<TicketPriorityResponse[]>([]);
   readonly selectedHistory = signal<TicketHistoryItemResponse[]>([]);
@@ -34,6 +39,12 @@ export class TicketManagementPageComponent implements OnInit {
   readonly canAssignOthers = computed(() => this.authService.hasRole('admin'));
   readonly canSelfAssign = computed(() => this.authService.hasRole('admin') || this.authService.hasRole('agent'));
   readonly isCustomer = computed(() => this.authService.hasRole('customer'));
+  readonly statusOptions = [
+    { value: 'in_progress', label: 'In Progress' },
+    { value: 'waiting_on_customer', label: 'Waiting On Customer' },
+    { value: 'resolved', label: 'Resolved' },
+    { value: 'closed', label: 'Closed' }
+  ] as const;
 
   readonly createForm = this.formBuilder.nonNullable.group({
     customerUserId: [''],
@@ -54,10 +65,12 @@ export class TicketManagementPageComponent implements OnInit {
   });
 
   constructor(
-    private readonly api: TicketManagementApiService
+    private readonly api: TicketManagementApiService,
+    private readonly customerApi: CustomerManagementApiService
   ) {}
 
   ngOnInit(): void {
+    this.loadCustomerOptions();
     this.refreshTaxonomy();
     this.loadTickets();
   }
@@ -70,7 +83,7 @@ export class TicketManagementPageComponent implements OnInit {
     const value = this.createForm.getRawValue();
 
     if (!this.isCustomer() && !value.customerUserId.trim()) {
-      this.error.set('Select a customer user before creating a ticket.');
+      this.error.set('Select a customer before creating a ticket.');
       return;
     }
 
@@ -204,6 +217,8 @@ export class TicketManagementPageComponent implements OnInit {
           if (selectedTicketId && !response.items.some((row) => row.id === selectedTicketId)) {
             this.statusForm.controls.ticketId.setValue('');
           }
+
+          this.onSelectedTicketChanged();
         },
         error: (err: Error) => this.error.set(`Ticket list failed: ${err.message}`)
       });
@@ -212,7 +227,31 @@ export class TicketManagementPageComponent implements OnInit {
   selectTicketForStatus(ticketId: string): void {
     this.statusForm.controls.ticketId.setValue(ticketId);
     this.assignForm.controls.ticketId.setValue(ticketId);
+    this.onSelectedTicketChanged();
     this.success.set(`Ticket ${ticketId} selected for status transition.`);
+  }
+
+  onSelectedTicketChanged(): void {
+    const options = this.getAvailableTargetStatuses();
+    const selectedTarget = this.statusForm.controls.targetStatus.value;
+
+    if (!options.some((option) => option.value === selectedTarget)) {
+      this.statusForm.controls.targetStatus.setValue(options[0]?.value ?? 'in_progress');
+    }
+  }
+
+  getAvailableTargetStatuses(): ReadonlyArray<{ value: string; label: string }> {
+    const ticketId = this.statusForm.controls.ticketId.value.trim();
+    if (!ticketId) {
+      return this.statusOptions;
+    }
+
+    const selectedTicket = this.tickets().find((ticket) => ticket.id === ticketId);
+    if (!selectedTicket) {
+      return this.statusOptions;
+    }
+
+    return this.statusOptions.filter((option) => this.canTransition(selectedTicket.status, option.value));
   }
 
   getHistoryFieldLabel(fieldName: string): string {
@@ -288,6 +327,34 @@ export class TicketManagementPageComponent implements OnInit {
     return `Agent (${trimmed})`;
   }
 
+  private canTransition(currentStatus: string, targetStatus: string): boolean {
+    const current = currentStatus.trim().toLowerCase();
+    const target = targetStatus.trim().toLowerCase();
+
+    if (!current || !target) {
+      return false;
+    }
+
+    if (current === target) {
+      return true;
+    }
+
+    switch (current) {
+      case 'new':
+        return target === 'in_progress' || target === 'waiting_on_customer' || target === 'resolved' || target === 'closed';
+      case 'in_progress':
+        return target === 'waiting_on_customer' || target === 'resolved' || target === 'closed';
+      case 'waiting_on_customer':
+        return target === 'in_progress' || target === 'resolved' || target === 'closed';
+      case 'resolved':
+        return target === 'closed';
+      case 'closed':
+        return false;
+      default:
+        return false;
+    }
+  }
+
   private refreshTaxonomy(): void {
     this.api.listCategories(true).subscribe({
       next: (categories) => this.categories.set(categories),
@@ -297,6 +364,56 @@ export class TicketManagementPageComponent implements OnInit {
     this.api.listPriorities(true).subscribe({
       next: (priorities) => this.priorities.set(priorities),
       error: (err: Error) => this.error.set(`Priority load failed: ${err.message}`)
+    });
+  }
+
+  private loadCustomerOptions(): void {
+    if (this.isCustomer()) {
+      return;
+    }
+
+    this.loadCustomerOptionsPage(1, []);
+  }
+
+  private loadCustomerOptionsPage(page: number, accumulated: CustomerListItemResponse[]): void {
+    this.customerApi.listCustomers(page, TicketManagementPageComponent.customerPageSize).subscribe({
+      next: (response) => {
+        const merged = accumulated.concat(response.items);
+        const totalPages = Math.ceil(response.totalCount / response.pageSize);
+
+        if (page < totalPages) {
+          this.loadCustomerOptionsPage(page + 1, merged);
+          return;
+        }
+
+        const uniqueByUserId = new Map<string, CustomerListItemResponse>();
+        for (const customer of merged) {
+          if (!customer.applicationUserId) {
+            continue;
+          }
+
+          const key = customer.applicationUserId.toLowerCase();
+          if (!uniqueByUserId.has(key)) {
+            uniqueByUserId.set(key, customer);
+          }
+        }
+
+        const options = Array.from(uniqueByUserId.values()).sort((left, right) => left.name.localeCompare(right.name));
+        this.customerOptions.set(options);
+
+        const selectedCustomerUserId = this.createForm.controls.customerUserId.value.trim();
+        if (
+          selectedCustomerUserId &&
+          !options.some(
+            (customer) =>
+              !!customer.applicationUserId &&
+              customer.applicationUserId.toLowerCase() === selectedCustomerUserId.toLowerCase()
+          )
+        ) {
+          this.createForm.controls.customerUserId.setValue('');
+        }
+      },
+      error: (err: Error) => this.error.set(`Customer list failed: ${err.message}`)
     });
   }
 

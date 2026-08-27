@@ -377,7 +377,7 @@ public static class TicketEndpoints
         var isAgent = IsAgent(httpContext.User);
         if (!isAdmin && isAgent)
         {
-            if (!actorUserId.HasValue || ticket.AssignedToUserId != actorUserId.Value)
+            if (!actorUserId.HasValue)
             {
                 return Results.Forbid();
             }
@@ -412,6 +412,22 @@ public static class TicketEndpoints
 
         var now = DateTime.UtcNow;
         dbContext.Entry(ticket).Property(row => row.RowVersion).OriginalValue = request.RowVersion;
+
+        if (!isAdmin && isAgent && actorUserId.HasValue && !ticket.AssignedToUserId.HasValue)
+        {
+            AddHistory(
+                dbContext,
+                ticket,
+                "ticket.assigned",
+                "assignedToUserId",
+                null,
+                actorUserId.Value.ToString(),
+                httpContext.User,
+                now);
+
+            ticket.AssignedToUserId = actorUserId.Value;
+        }
+
         AddHistory(
             dbContext,
             ticket,
