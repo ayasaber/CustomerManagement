@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using CustomerManagement.Api.Contracts.Tickets;
+using CustomerManagement.Api.Domain.Customers;
 using CustomerManagement.Api.Domain.Tickets;
 using CustomerManagement.Api.Infrastructure.Auth;
 using CustomerManagement.Api.Infrastructure.Persistence;
@@ -73,17 +74,35 @@ public static class TicketEndpoints
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var errors = await ValidateCreateTicketAsync(request, dbContext, cancellationToken);
+        var resolvedCustomerId = await ResolveCreateCustomerIdAsync(request, httpContext.User, dbContext, cancellationToken);
+        if (!resolvedCustomerId.HasValue)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["customerUserId"] = ["A valid linked customer user is required for ticket creation."]
+            });
+        }
+
+        var errors = await ValidateCreateTicketAsync(resolvedCustomerId.Value, request, dbContext, cancellationToken);
         if (errors.Count > 0)
         {
             return Results.ValidationProblem(errors);
+        }
+
+        if (ShouldApplyCustomerScope(httpContext.User))
+        {
+            var ownedCustomerIds = await ResolveOwnedCustomerIdsAsync(httpContext.User, dbContext, cancellationToken);
+            if (!ownedCustomerIds.Contains(resolvedCustomerId.Value))
+            {
+                return Results.Forbid();
+            }
         }
 
         var now = DateTime.UtcNow;
         var ticket = new Ticket
         {
             Id = Guid.NewGuid(),
-            CustomerId = request.CustomerId,
+            CustomerId = resolvedCustomerId.Value,
             CategoryId = request.CategoryId,
             PriorityId = request.PriorityId,
             Subject = request.Subject.Trim(),
@@ -120,6 +139,7 @@ public static class TicketEndpoints
         [FromQuery] string? status,
         [FromQuery] int? page,
         [FromQuery] int? pageSize,
+        HttpContext httpContext,
         CustomerManagementDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -155,6 +175,17 @@ public static class TicketEndpoints
             .Include(ticket => ticket.Priority)
             .Include(ticket => ticket.AssignedToUser)
             .AsQueryable();
+
+        if (ShouldApplyCustomerScope(httpContext.User))
+        {
+            var ownedCustomerIds = await ResolveOwnedCustomerIdsAsync(httpContext.User, dbContext, cancellationToken);
+            if (ownedCustomerIds.Count == 0)
+            {
+                return Results.Ok(new TicketListResponse(resolvedPage, resolvedPageSize, 0, []));
+            }
+
+            query = query.Where(ticket => ownedCustomerIds.Contains(ticket.CustomerId));
+        }
 
         if (customerId.HasValue)
         {
@@ -214,11 +245,26 @@ public static class TicketEndpoints
 
     private static async Task<IResult> GetTicketAsync(
         Guid ticketId,
+        HttpContext httpContext,
         CustomerManagementDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var ticket = await LoadTicketProjectionAsync(ticketId, dbContext, cancellationToken);
-        return ticket is null ? Results.NotFound() : Results.Ok(ticket);
+        if (ticket is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (ShouldApplyCustomerScope(httpContext.User))
+        {
+            var ownedCustomerIds = await ResolveOwnedCustomerIdsAsync(httpContext.User, dbContext, cancellationToken);
+            if (!ownedCustomerIds.Contains(ticket.CustomerId))
+            {
+                return Results.NotFound();
+            }
+        }
+
+        return Results.Ok(ticket);
     }
 
     private static async Task<IResult> UpdateTicketCoreAsync(
@@ -238,6 +284,15 @@ public static class TicketEndpoints
         if (ticket is null)
         {
             return Results.NotFound();
+        }
+
+        if (ShouldApplyCustomerScope(httpContext.User))
+        {
+            var ownedCustomerIds = await ResolveOwnedCustomerIdsAsync(httpContext.User, dbContext, cancellationToken);
+            if (!ownedCustomerIds.Contains(ticket.CustomerId))
+            {
+                return Results.NotFound();
+            }
         }
 
         var now = DateTime.UtcNow;
@@ -308,6 +363,26 @@ public static class TicketEndpoints
             return Results.NotFound();
         }
 
+        if (ShouldApplyCustomerScope(httpContext.User))
+        {
+            var ownedCustomerIds = await ResolveOwnedCustomerIdsAsync(httpContext.User, dbContext, cancellationToken);
+            if (!ownedCustomerIds.Contains(ticket.CustomerId))
+            {
+                return Results.NotFound();
+            }
+        }
+
+        var actorUserId = ResolveActorUserId(httpContext.User);
+        var isAdmin = IsAdmin(httpContext.User);
+        var isAgent = IsAgent(httpContext.User);
+        if (!isAdmin && isAgent)
+        {
+            if (!actorUserId.HasValue || ticket.AssignedToUserId != actorUserId.Value)
+            {
+                return Results.Forbid();
+            }
+        }
+
         var targetStatus = ParseStatus(request.TargetStatus)!;
         if (!CanTransition(ticket.Status, targetStatus.Value))
         {
@@ -321,13 +396,17 @@ public static class TicketEndpoints
 
         if (targetStatus.Value is TicketStatus.Resolved or TicketStatus.Closed)
         {
-            var hasClosePermission = httpContext.User.Claims.Any(claim =>
-                string.Equals(claim.Type, "permission", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(claim.Value, Permissions.TicketsClose, StringComparison.OrdinalIgnoreCase));
-
-            if (!hasClosePermission)
+            // Customer callers are ownership-scoped above; internal close permission check applies to non-customer actors.
+            if (!IsCustomer(httpContext.User))
             {
-                return Results.Forbid();
+                var hasClosePermission = httpContext.User.Claims.Any(claim =>
+                    string.Equals(claim.Type, "permission", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(claim.Value, Permissions.TicketsClose, StringComparison.OrdinalIgnoreCase));
+
+                if (!hasClosePermission)
+                {
+                    return Results.Forbid();
+                }
             }
         }
 
@@ -371,6 +450,21 @@ public static class TicketEndpoints
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
+        var actorUserId = ResolveActorUserId(httpContext.User);
+        var isAdmin = IsAdmin(httpContext.User);
+        if (!isAdmin)
+        {
+            if (!actorUserId.HasValue)
+            {
+                return Results.Forbid();
+            }
+
+            if (request.AssigneeUserId != actorUserId.Value)
+            {
+                return Results.Forbid();
+            }
+        }
+
         var errors = ValidateAssignmentRequest(request.AssigneeUserId, request.RowVersion);
         if (errors.Count > 0)
         {
@@ -621,16 +715,28 @@ public static class TicketEndpoints
 
     private static async Task<IResult> GetTicketHistoryAsync(
         Guid ticketId,
+        HttpContext httpContext,
         CustomerManagementDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var ticketExists = await dbContext.Tickets
+        var ticketScope = await dbContext.Tickets
             .AsNoTracking()
-            .AnyAsync(ticket => ticket.Id == ticketId, cancellationToken);
+            .Where(ticket => ticket.Id == ticketId)
+            .Select(ticket => new { ticket.Id, ticket.CustomerId })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (!ticketExists)
+        if (ticketScope is null)
         {
             return Results.NotFound();
+        }
+
+        if (ShouldApplyCustomerScope(httpContext.User))
+        {
+            var ownedCustomerIds = await ResolveOwnedCustomerIdsAsync(httpContext.User, dbContext, cancellationToken);
+            if (!ownedCustomerIds.Contains(ticketScope.CustomerId))
+            {
+                return Results.NotFound();
+            }
         }
 
         var entries = await dbContext.TicketHistoryEntries
@@ -686,11 +792,12 @@ public static class TicketEndpoints
     }
 
     private static async Task<Dictionary<string, string[]>> ValidateCreateTicketAsync(
+        Guid customerId,
         CreateTicketRequest request,
         CustomerManagementDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var errors = ValidateCore(request.CustomerId, request.CategoryId, request.PriorityId, request.Subject, request.Description);
+        var errors = ValidateCore(customerId, request.CategoryId, request.PriorityId, request.Subject, request.Description);
 
         if (errors.Count > 0)
         {
@@ -699,7 +806,7 @@ public static class TicketEndpoints
 
         var customerExists = await dbContext.Customers
             .AsNoTracking()
-            .AnyAsync(customer => customer.Id == request.CustomerId, cancellationToken);
+            .AnyAsync(customer => customer.Id == customerId, cancellationToken);
         if (!customerExists)
         {
             errors["customerId"] = ["Customer does not exist."];
@@ -930,5 +1037,117 @@ public static class TicketEndpoints
     private static string? ResolveActorEmail(ClaimsPrincipal actor)
     {
         return actor.FindFirstValue(ClaimTypes.Email) ?? actor.FindFirstValue("email") ?? actor.Identity?.Name;
+    }
+
+    private static bool IsAdmin(ClaimsPrincipal actor)
+    {
+        return actor.IsInRole(AuthRoles.Admin)
+            || actor.Claims.Any(claim =>
+                string.Equals(claim.Type, ClaimTypes.Role, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(claim.Value, AuthRoles.Admin, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsAgent(ClaimsPrincipal actor)
+    {
+        return actor.IsInRole(AuthRoles.Agent)
+            || actor.Claims.Any(claim =>
+                string.Equals(claim.Type, ClaimTypes.Role, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(claim.Value, AuthRoles.Agent, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsCustomer(ClaimsPrincipal actor)
+    {
+        return actor.IsInRole(AuthRoles.Customer)
+            || actor.Claims.Any(claim =>
+                string.Equals(claim.Type, ClaimTypes.Role, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(claim.Value, AuthRoles.Customer, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool ShouldApplyCustomerScope(ClaimsPrincipal actor)
+    {
+        if (IsAdmin(actor) || IsAgent(actor))
+        {
+            return false;
+        }
+
+        if (IsCustomer(actor))
+        {
+            return true;
+        }
+
+        return HasPermission(actor, Permissions.TicketsRead) || HasPermission(actor, Permissions.TicketsWrite);
+    }
+
+    private static bool HasPermission(ClaimsPrincipal actor, string permission)
+    {
+        return actor.Claims.Any(claim =>
+            string.Equals(claim.Type, "permission", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(claim.Value, permission, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static async Task<HashSet<Guid>> ResolveOwnedCustomerIdsAsync(
+        ClaimsPrincipal actor,
+        CustomerManagementDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var actorUserId = ResolveActorUserId(actor);
+        if (!actorUserId.HasValue)
+        {
+            return [];
+        }
+
+        return await dbContext.Customers
+            .AsNoTracking()
+            .Where(customer => customer.ApplicationUserId == actorUserId.Value)
+            .Select(customer => customer.Id)
+            .Distinct()
+            .ToHashSetAsync(cancellationToken);
+    }
+
+    private static async Task<Guid?> ResolveCreateCustomerIdAsync(
+        CreateTicketRequest request,
+        ClaimsPrincipal actor,
+        CustomerManagementDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        if (IsCustomer(actor))
+        {
+            var actorUserId = ResolveActorUserId(actor);
+            if (!actorUserId.HasValue)
+            {
+                return null;
+            }
+
+            return await dbContext.Customers
+                .AsNoTracking()
+                .Where(customer => customer.ApplicationUserId == actorUserId.Value)
+                .Select(customer => (Guid?)customer.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (!request.CustomerUserId.HasValue || request.CustomerUserId.Value == Guid.Empty)
+        {
+            return null;
+        }
+
+        var selectedUserId = request.CustomerUserId.Value;
+
+        var isCustomerRole = await (
+                from userRole in dbContext.UserRoles.AsNoTracking()
+                join role in dbContext.Roles.AsNoTracking() on userRole.RoleId equals role.Id
+                where userRole.UserId == selectedUserId
+                select role.Name)
+            .AnyAsync(roleName => roleName == AuthRoles.Customer, cancellationToken);
+
+        if (!isCustomerRole)
+        {
+            return null;
+        }
+
+        return await dbContext.Customers
+            .AsNoTracking()
+            .Where(customer => customer.ApplicationUserId == selectedUserId)
+            .Select(customer => (Guid?)customer.Id)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }

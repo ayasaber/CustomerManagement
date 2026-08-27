@@ -1,17 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import {
-  CreateCustomerProfileRequest,
   CustomerAttachmentResponse,
   CustomerContactDetailResponse,
   CustomerInteractionHistoryItemResponse,
+  CustomerListItemResponse,
   CustomerNoteResponse,
   CustomerProfileResponse,
   UpdateCustomerProfileRequest
 } from '../../core/models/customer-management.models';
-import { AgentContextService } from '../../core/services/agent-context.service';
 import { CustomerManagementApiService } from '../../core/services/customer-management-api.service';
 import { CustomerAttachmentsComponent } from './customer-attachments.component';
 import { CustomerContactDetailsComponent } from './customer-contact-details.component';
@@ -39,6 +38,7 @@ export class CustomerManagementPageComponent {
   private activeRequests = 0;
 
   readonly profile = signal<CustomerProfileResponse | null>(null);
+  readonly customers = signal<CustomerListItemResponse[]>([]);
   readonly contactDetails = signal<CustomerContactDetailResponse[]>([]);
   readonly interactionItems = signal<CustomerInteractionHistoryItemResponse[]>([]);
   readonly notes = signal<CustomerNoteResponse[]>([]);
@@ -48,20 +48,18 @@ export class CustomerManagementPageComponent {
   readonly success = signal('');
   readonly loading = signal(false);
 
-  readonly effectiveRole = computed(() => this.agentContext.role());
-
   readonly lookupForm = this.formBuilder.nonNullable.group({
     customerId: ['', [Validators.required]]
   });
 
-  constructor(
-    private readonly api: CustomerManagementApiService,
-    private readonly agentContext: AgentContextService
-  ) {}
+  readonly browseForm = this.formBuilder.nonNullable.group({
+    search: ['']
+  });
 
-  setRole(role: string): void {
-    this.agentContext.setRole(role);
-    this.setSuccess(`Role switched to ${role}.`);
+  constructor(
+    private readonly api: CustomerManagementApiService
+  ) {
+    this.loadCustomerList();
   }
 
   loadCustomer(): void {
@@ -76,22 +74,6 @@ export class CustomerManagementPageComponent {
     }
 
     this.fetchAll(customerId);
-  }
-
-  createProfile(request: CreateCustomerProfileRequest): void {
-    this.beginRequest();
-    this.api
-      .createProfile(request)
-      .pipe(finalize(() => this.completeRequest()))
-      .subscribe({
-        next: (profile) => {
-          this.profile.set(profile);
-          this.lookupForm.patchValue({ customerId: profile.id });
-          this.setSuccess('Profile created successfully.');
-          this.fetchAll(profile.id);
-        },
-        error: (err: Error) => this.setError(`Profile create failed: ${err.message}`)
-      });
   }
 
   updateProfile(request: UpdateCustomerProfileRequest): void {
@@ -113,6 +95,23 @@ export class CustomerManagementPageComponent {
         },
         error: (err: Error) => this.setError(`Profile update failed: ${err.message}`)
       });
+  }
+
+  loadCustomerList(): void {
+    const search = this.browseForm.controls.search.value;
+    this.beginRequest(false);
+    this.api
+      .listCustomers(1, 100, search)
+      .pipe(finalize(() => this.completeRequest()))
+      .subscribe({
+        next: (response) => this.customers.set(response.items),
+        error: (err: Error) => this.setError(`Customer list failed: ${err.message}`)
+      });
+  }
+
+  browseCustomer(customerId: string): void {
+    this.lookupForm.patchValue({ customerId });
+    this.fetchAll(customerId);
   }
 
   addNote(body: string): void {

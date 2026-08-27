@@ -27,7 +27,7 @@ public sealed record TicketPriorityResponse(
     byte[] RowVersion);
 
 public sealed record CreateTicketRequest(
-    Guid CustomerId,
+    Guid? CustomerUserId,
     Guid CategoryId,
     Guid PriorityId,
     string Subject,

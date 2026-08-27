@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using CustomerManagement.Api.Contracts.Auth;
 using CustomerManagement.Api.Contracts.Customers;
+using CustomerManagement.Api.Endpoints.Customers;
 using CustomerManagement.Api.Tests.Infrastructure;
 
 namespace CustomerManagement.Api.Tests;
@@ -15,7 +17,7 @@ public sealed class CustomerProfileEndpointsTests : IClassFixture<CustomerManage
     }
 
     [Fact]
-    public async Task CreateCustomerProfile_ReturnsCreated_WhenRequestIsValid()
+    public async Task CreateCustomerProfile_ReturnsBadRequest_WhenCreationIsRequestedOutsideRegistration()
     {
         var request = new CreateCustomerProfileRequest(
             "Aya Hassan",
@@ -25,30 +27,21 @@ public sealed class CustomerProfileEndpointsTests : IClassFixture<CustomerManage
         using var httpRequest = NewAgentRequest(HttpMethod.Post, "/api/customers", request);
         var response = await _client.SendAsync(httpRequest);
 
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        Assert.NotNull(response.Headers.Location);
-
-        var payload = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
-        Assert.NotNull(payload);
-        Assert.Equal("Aya Hassan", payload!.Name);
-        Assert.Equal("Acme", payload.Company);
-        Assert.Single(payload.ContactDetails);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
-    public async Task CreateCustomerProfile_ReturnsBadRequest_WhenNameIsMissing()
+    public async Task ListCustomers_ReturnsOk_WhenAgentRoleIsUsed()
     {
-        var request = new CreateCustomerProfileRequest(
-            " ",
-            null,
-            null);
+        await RegisterCustomerAsync($"list-{Guid.NewGuid():N}@crm.local", "List User", "Contoso");
 
-        using var httpRequest = NewAgentRequest(HttpMethod.Post, "/api/customers", request);
+        using var httpRequest = NewAgentRequest(HttpMethod.Get, "/api/customers?page=1&pageSize=25");
         var response = await _client.SendAsync(httpRequest);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadAsStringAsync();
-        Assert.Contains("name", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<CustomerListResponse>();
+        Assert.NotNull(payload);
+        Assert.NotEmpty(payload!.Items);
     }
 
     [Fact]
@@ -157,10 +150,8 @@ public sealed class CustomerProfileEndpointsTests : IClassFixture<CustomerManage
     [Fact]
     public async Task ProtectedEndpoint_ReturnsForbidden_WhenRoleIsNotAgent()
     {
-        var request = new CreateCustomerProfileRequest("A", null, null);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/customers")
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, "/api/customers")
         {
-            Content = JsonContent.Create(request)
         };
         httpRequest.Headers.Add("X-User-Role", "customer");
 
@@ -185,14 +176,54 @@ public sealed class CustomerProfileEndpointsTests : IClassFixture<CustomerManage
         string? company,
         IReadOnlyList<CreateCustomerContactDetailRequest>? contactDetails = null)
     {
-        var request = new CreateCustomerProfileRequest(name, company, contactDetails);
-        using var httpRequest = NewAgentRequest(HttpMethod.Post, "/api/customers", request);
-        var response = await _client.SendAsync(httpRequest);
-        response.EnsureSuccessStatusCode();
+        var email = $"customer-{Guid.NewGuid():N}@crm.local";
+        var userId = await RegisterCustomerAsync(email, name, company ?? "Contoso", contactDetails);
 
-        var payload = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
-        Assert.NotNull(payload);
-        return payload;
+        using var listRequest = NewAgentRequest(HttpMethod.Get, "/api/customers?page=1&pageSize=200");
+        var listResponse = await _client.SendAsync(listRequest);
+        listResponse.EnsureSuccessStatusCode();
+
+        var listPayload = await listResponse.Content.ReadFromJsonAsync<CustomerListResponse>();
+        Assert.NotNull(listPayload);
+
+        var customer = listPayload!.Items.FirstOrDefault(item => item.ApplicationUserId == userId);
+        Assert.NotNull(customer);
+
+        using var profileRequest = NewAgentRequest(HttpMethod.Get, $"/api/customers/{customer!.Id}");
+        var profileResponse = await _client.SendAsync(profileRequest);
+        profileResponse.EnsureSuccessStatusCode();
+
+        var profile = await profileResponse.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(profile);
+        return profile!;
+    }
+
+    private async Task<Guid> RegisterCustomerAsync(
+        string email,
+        string fullName,
+        string company,
+        IReadOnlyList<CreateCustomerContactDetailRequest>? contactDetails = null)
+    {
+        var registrationContacts = (contactDetails ?? [new CreateCustomerContactDetailRequest(1, email, "work", true)])
+            .Select(detail => new RegisterContactDetailRequest(detail.Channel, detail.Value, detail.Label, detail.IsPrimary))
+            .ToList();
+
+        var registerRequest = new RegisterRequest(
+            email,
+            "Agent!23456",
+            "Agent!23456",
+            fullName,
+            "customer",
+            fullName,
+            company,
+            registrationContacts);
+
+        var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+        registerResponse.EnsureSuccessStatusCode();
+
+        var token = await registerResponse.Content.ReadFromJsonAsync<TokenResponse>();
+        Assert.NotNull(token);
+        return Guid.Parse(token!.UserId);
     }
 
     private static HttpRequestMessage NewAgentRequest(HttpMethod method, string uri, object? body = null)

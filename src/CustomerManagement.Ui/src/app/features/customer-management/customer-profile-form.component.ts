@@ -40,7 +40,7 @@ import {
           <input formControlName="label" />
         </label>
 
-        <button type="submit" [disabled]="form.invalid">{{ profile ? 'Update Profile' : 'Create Profile' }}</button>
+        <button type="submit" [disabled]="form.invalid || !profile">Update Profile</button>
       </form>
     </section>
   `,
@@ -107,11 +107,5 @@ export class CustomerProfileFormComponent {
       });
       return;
     }
-
-    this.createRequested.emit({
-      name: this.form.controls.name.value,
-      company: this.form.controls.company.value,
-      contactDetails
-    });
   }
 }

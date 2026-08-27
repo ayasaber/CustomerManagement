@@ -4,11 +4,6 @@
       <h1>Customer Management Workspace</h1>
       <p>Agent-focused UI routed through the gateway surface.</p>
     </div>
-    <div class="role-switch">
-      <span>Role:</span>
-      <button type="button" (click)="setRole('agent')" [class.active]="effectiveRole() === 'agent'">agent</button>
-      <button type="button" (click)="setRole('viewer')" [class.active]="effectiveRole() === 'viewer'">viewer</button>
-    </div>
   </header>
 
   <section class="toolbar">
@@ -17,6 +12,34 @@
       <input id="customerId" formControlName="customerId" placeholder="guid" />
       <button type="submit" [disabled]="lookupForm.invalid || loading()">Load</button>
     </form>
+
+    <form [formGroup]="browseForm" (ngSubmit)="loadCustomerList()" class="lookup-form">
+      <label for="search">Search</label>
+      <input id="search" formControlName="search" placeholder="name, company, or email" />
+      <button type="submit" [disabled]="loading()">Browse</button>
+    </form>
+  </section>
+
+  <section class="panel" *ngIf="customers().length > 0">
+    <h2>Customers</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Company</th>
+          <th>Email</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let customer of customers()">
+          <td>{{ customer.name }}</td>
+          <td>{{ customer.company || '-' }}</td>
+          <td>{{ customer.primaryEmail || '-' }}</td>
+          <td class="action-cell"><button type="button" class="action-btn" (click)="browseCustomer(customer.id)">Open</button></td>
+        </tr>
+      </tbody>
+    </table>
   </section>
 
   <div class="status-stack" *ngIf="loading() || error() || success()">
@@ -28,7 +51,6 @@
   <div class="grid">
     <app-customer-profile-form
       [profile]="profile()"
-      (createRequested)="createProfile($event)"
       (updateRequested)="updateProfile($event)">
     </app-customer-profile-form>
 

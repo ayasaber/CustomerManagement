@@ -14,7 +14,7 @@ public static class TicketPriorityEndpoints
         var group = app.MapGroup("/api/tickets/priorities").WithTags("Tickets.Priorities");
 
         group.MapGet("", ListPrioritiesAsync)
-            .RequireAuthorization("Permission:" + Permissions.TicketsRead)
+            .RequireAuthorization()
             .WithName("ListTicketPriorities")
             .WithSummary("List ticket priorities");
 

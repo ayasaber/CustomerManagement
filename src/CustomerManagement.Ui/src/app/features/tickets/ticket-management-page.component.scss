@@ -57,6 +57,29 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.25rem;
+}
+
+.status-actions button {
+  min-height: 38px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 700;
+}
+
+.secondary-btn {
+  background: #f0f7ff;
+  color: #113a56;
+  border-color: #8bb6d8;
+}
+
+.secondary-btn:hover:not(:disabled) {
+  background: #e1f0ff;
+}
+
 .status {
   margin: 0;
   padding: 0.5rem 0.75rem;
@@ -101,9 +124,30 @@ button:disabled {
   margin: 0;
   padding-left: 1.2rem;
   display: grid;
-  gap: 0.45rem;
+  gap: 0.7rem;
+}
+
+.history-list li {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.history-list span {
+  display: block;
+  color: #213548;
+  word-break: break-word;
 }
 
 .history-list small {
   color: #6d7b89;
+}
+
+@media (max-width: 640px) {
+  .status-actions {
+    flex-direction: column;
+  }
+
+  .status-actions button {
+    width: 100%;
+  }
 }

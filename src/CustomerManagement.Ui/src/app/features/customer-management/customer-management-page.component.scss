@@ -62,6 +62,8 @@
   border: 1px solid #dbcdb4;
   border-radius: 12px;
   padding: 0.8rem 0.9rem;
+  display: grid;
+  gap: 0.65rem;
 }
 
 .lookup-form {
@@ -79,7 +81,9 @@
   width: 100%;
   border: 1px solid #bfb5a2;
   border-radius: 8px;
-  padding: 0.5rem;
+  min-height: 40px;
+  padding: 0.5rem 0.65rem;
+  box-sizing: border-box;
 }
 
 .lookup-form button {
@@ -87,7 +91,49 @@
   border-radius: 999px;
   background: #0f4c81;
   color: #fff;
+  min-height: 40px;
   padding: 0.55rem 1rem;
+  min-width: 92px;
+  font-weight: 700;
+  justify-self: end;
+}
+
+.panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.panel th,
+.panel td {
+  padding: 0.5rem 0.35rem;
+  border-bottom: 1px solid #eadfcb;
+  vertical-align: middle;
+}
+
+.panel thead th {
+  text-align: left;
+  color: #4e4539;
+}
+
+.action-cell {
+  width: 110px;
+  text-align: center;
+}
+
+.action-btn {
+  border: 1px solid #0f4c81;
+  border-radius: 8px;
+  background: #f4f9ff;
+  color: #0f4c81;
+  font-weight: 700;
+  min-width: 72px;
+  min-height: 34px;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background: #e6f2ff;
 }
 
 .status {

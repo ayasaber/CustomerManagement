@@ -43,7 +43,7 @@ export interface TicketPriorityResponse {
 }
 
 export interface CreateTicketRequest {
-  customerId: string;
+  customerUserId?: string;
   categoryId: string;
   priorityId: string;
   subject: string;
@@ -52,6 +52,15 @@ export interface CreateTicketRequest {
 
 export interface UpdateTicketStatusRequest {
   targetStatus: string;
+  rowVersion: number[];
+}
+
+export interface AssignTicketRequest {
+  assigneeUserId: string;
+  rowVersion: number[];
+}
+
+export interface SelfAssignTicketRequest {
   rowVersion: number[];
 }
 

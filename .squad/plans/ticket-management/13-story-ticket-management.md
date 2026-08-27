@@ -25,10 +25,17 @@ User-visible outcomes:
 2. Categories/priorities are fixed, admin-managed lists (add/edit/deactivate), not free text.
 3. Assignment, escalation, and status history are tracked with actor + UTC timestamps.
 4. Agents can list/filter/open tickets quickly from a dedicated UI.
+5. Customers can access a limited ticket workspace for create/update/track/history actions.
+
+Customer ownership and creation policy (finalized):
+
+1. Customer profiles are created during customer self-registration; agent-side customer profile creation is disabled.
+2. Ticket creation for customer callers auto-binds the customer profile from logged-in identity.
+3. Ticket creation for agent/admin callers uses selected customer user id, then resolves linked customer profile server-side.
 
 Out of scope:
 
-- Customer-initiated ticket creation from Customer Portal.
+- Full customer-portal self-service workflow (dedicated portal UX and automation flows).
 - Automatic/time-based escalation rules.
 - Communication-channel auto-ingestion into tickets.
 
@@ -62,6 +69,9 @@ Out of scope:
 - Authorization must use permissions, not hardcoded role checks in endpoint logic.
 - Escalation is manual only.
 - Ticket history must record who/when/old->new for lifecycle changes.
+- Policy clarification from execution: non-admin agents may self-assign only; assigning to another user is admin-only.
+- Customer scope clarification: customers can access ticket workspace for create/update/track/history via authenticated ticket route; assignment-to-other-agent remains admin-only.
+- Customer identity linkage clarification: ticket ownership resolution must use explicit `Customer.ApplicationUserId` linkage, not email-based inference.
 
 ---
 
@@ -187,7 +197,9 @@ Validation rules:
 Create file: `src/CustomerManagement.Api/Endpoints/Tickets/TicketEndpoints.cs`
 
 - `POST /api/tickets` (`tickets.write`)
-  - Validates customer exists.
+  - Customer caller: resolve customer internally from current user link (`Customer.ApplicationUserId`).
+  - Agent/Admin caller: require `customerUserId`, resolve linked customer profile.
+  - Validates resolved customer exists.
   - Validates category/priority exist and are active.
   - Sets `Status = New`, `IsEscalated = false`.
   - Returns `201 Created` + `TicketResponse`.
@@ -466,6 +478,30 @@ Current bugs captured in this execution:
   - Root cause: implemented state machine was stricter than story definition.
   - Fix: align `CanTransition` rules with story state matrix.
   - Prevention: add transition matrix tests for all allowed and blocked transitions and include FE message check for ProblemDetails detail text.
+7. Symptom: Assign/self-assign capability existed in backend but was missing from ticket UI, creating a story compliance gap.
+  - Root cause: partial frontend implementation delivered create/status/history only.
+  - Fix: implement assign-to-agent and self-assign controls in ticket UI and wire to `/assign` and `/self-assign` endpoints.
+  - Prevention: add mandatory UI checklist item for assignment controls and include assignment actions in manual smoke script.
+8. Symptom: Authorization expectation conflict for assignment actions (agent assigning other agents).
+  - Root cause: policy expectation was not explicit in story acceptance language.
+  - Fix: enforce runtime rule that agents can self-assign only; admin can assign any eligible agent.
+  - Prevention: add explicit API and UI tests for `agent self-assign allowed` and `agent assign-other forbidden`.
+9. Symptom: Customer ticket visibility expectation conflicted with earlier story wording.
+  - Root cause: scope language said customer ticket creation was out of scope while stakeholders expected customer ticket workspace visibility.
+  - Fix: clarify scope to allow customer access to ticket workspace for create/update/track/history.
+  - Prevention: include explicit route/nav acceptance checks for customer role in verification.
+10. Symptom: Agents could change status for tickets not assigned to them.
+  - Root cause: status endpoint authorization checked permission only, without assignment ownership rule.
+  - Fix: enforce that non-admin agents can update status only for tickets assigned to themselves; admins can update any ticket.
+  - Prevention: add API tests for `agent update-status on own assigned ticket = allowed` and `agent update-status on unassigned/others ticket = forbidden`.
+11. Symptom: Customer users could list/view/update tickets belonging to other customers.
+  - Root cause: ticket endpoints used permission-only authorization without customer ownership scoping.
+  - Fix: enforce customer ownership scoping on list/get/create/update/status/history operations.
+  - Prevention: add API tests for `customer list/get/update only own tickets` and negative tests for cross-customer access.
+11. Symptom: Customer ticket page failed to load taxonomy (`/api/tickets/categories`, `/api/tickets/priorities`) with `403`.
+  - Root cause: taxonomy read endpoints were permission-gated in a way that conflicted with customer-area ticket workspace usage.
+  - Fix: allow authenticated read access to taxonomy lookup endpoints; keep taxonomy create/update admin-managed.
+  - Prevention: add customer-role smoke check for category/priority load in ticket workspace.
 
 ---
 
@@ -486,6 +522,7 @@ Current bugs captured in this execution:
 6. Add component tests:
    - ticket list filters + pagination request mapping.
    - ticket detail actions with status/assignment/escalation/reopen paths.
+  - assignment authorization UI behavior (assign form hidden for non-admin, self-assign visible for agent/admin).
    - admin taxonomy add/edit/deactivate flows.
 7. Add smoke flow test:
    - create ticket -> self-assign -> move through status -> escalate -> resolve/close -> reopen -> verify history entries order.
@@ -494,6 +531,11 @@ Current bugs captured in this execution:
   - ticket list without status filter should return `200`.
   - create ticket without `customerId` should return `400`.
   - status transitions from `new` and `waiting_on_customer` to `closed` should follow story matrix and return `200` for authorized users.
+  - agent can self-assign but receives `403` when assigning another agent via `/assign`.
+  - customer role can access `/tickets` route and can invoke ticket create/list/history/update actions allowed by assigned permissions.
+  - agent receives `403` when attempting status update on a ticket not assigned to that agent.
+  - customer role list/get/update/status/history returns only own tickets; cross-customer access is denied.
+  - customer role can load `/api/tickets/categories` and `/api/tickets/priorities` successfully (no `403`).
 
 ---
 
@@ -539,4 +581,5 @@ Current bugs captured in this execution:
 - [ ] Categories/priorities support add/edit/deactivate and prevent selection of inactive values for new updates.
 - [ ] Gateway route contract includes all ticket and taxonomy endpoints and tests are updated.
 - [ ] Angular ticket list/detail/admin taxonomy pages are implemented and integrated into app navigation.
+- [ ] Ticket UI exposes assign-to-agent and self-assign actions (not backend-only).
 - [ ] API, gateway, and frontend automated tests pass with added ticket-management coverage.

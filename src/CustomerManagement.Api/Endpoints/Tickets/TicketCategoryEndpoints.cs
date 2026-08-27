@@ -14,7 +14,7 @@ public static class TicketCategoryEndpoints
         var group = app.MapGroup("/api/tickets/categories").WithTags("Tickets.Categories");
 
         group.MapGet("", ListCategoriesAsync)
-            .RequireAuthorization("Permission:" + Permissions.TicketsRead)
+            .RequireAuthorization()
             .WithName("ListTicketCategories")
             .WithSummary("List ticket categories");
 

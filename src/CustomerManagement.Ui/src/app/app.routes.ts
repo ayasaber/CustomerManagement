@@ -77,7 +77,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'tickets',
-		canActivate: [agentOnlyGuard],
+		canActivate: [authenticatedGuard],
 		component: TicketManagementPageComponent
 	},
 	{

@@ -14,50 +14,82 @@ public static class CustomerProfileEndpoints
         var group = app.MapGroup("/api/customers");
         // TODO(Story-09): when customer deletion endpoint is added, capture an audit event via IAuditLogWriter.
 
-        group.MapPost("", async (
-            [FromBody] CreateCustomerProfileRequest request,
+        group.MapPost("", () =>
+            Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid operation",
+                Detail = "Customer profiles are created during customer registration only.",
+                Status = StatusCodes.Status400BadRequest
+            }))
+        .RequireAuthorization("Permission:" + Permissions.CustomersWrite)
+        .WithName("CreateCustomerProfile")
+        .WithSummary("Customer profile creation is disabled. Use customer registration.");
+
+        group.MapGet("", async (
+            [FromQuery] int? page,
+            [FromQuery] int? pageSize,
+            [FromQuery] string? search,
             CustomerManagementDbContext dbContext) =>
         {
-            var errors = Validate(request.Name, request.Company, request.ContactDetails);
+            var resolvedPage = page.GetValueOrDefault(1);
+            var resolvedPageSize = pageSize.GetValueOrDefault(50);
+            var errors = new Dictionary<string, string[]>();
+
+            if (resolvedPage < 1)
+            {
+                errors["page"] = ["Page must be greater than or equal to 1."];
+            }
+
+            if (resolvedPageSize < 1 || resolvedPageSize > 200)
+            {
+                errors["pageSize"] = ["PageSize must be between 1 and 200."];
+            }
+
             if (errors.Count > 0)
             {
                 return Results.ValidationProblem(errors);
             }
 
-            var now = DateTime.UtcNow;
-            var customer = new Customer
-            {
-                Id = Guid.NewGuid(),
-                Name = request.Name.Trim(),
-                Company = string.IsNullOrWhiteSpace(request.Company) ? null : request.Company.Trim(),
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
-            };
+            var query = dbContext.Customers
+                .AsNoTracking()
+                .Include(customer => customer.ContactDetails)
+                .AsQueryable();
 
-            foreach (var detail in request.ContactDetails ?? [])
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                customer.ContactDetails.Add(new ContactDetail
-                {
-                    Id = Guid.NewGuid(),
-                    CustomerId = customer.Id,
-                    Channel = (ContactChannel)detail.Channel,
-                    Value = detail.Value.Trim(),
-                    Label = string.IsNullOrWhiteSpace(detail.Label) ? null : detail.Label.Trim(),
-                    IsPrimary = detail.IsPrimary,
-                    CreatedAtUtc = now
-                });
+                var term = search.Trim().ToLowerInvariant();
+                query = query.Where(customer =>
+                    customer.Name.ToLower().Contains(term)
+                    || (customer.Company != null && customer.Company.ToLower().Contains(term))
+                    || customer.ContactDetails.Any(detail => detail.Value.ToLower().Contains(term)));
             }
 
-            dbContext.Customers.Add(customer);
-            await dbContext.SaveChangesAsync();
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderBy(customer => customer.Name)
+                .ThenBy(customer => customer.Id)
+                .Skip((resolvedPage - 1) * resolvedPageSize)
+                .Take(resolvedPageSize)
+                .Select(customer => new CustomerListItemResponse(
+                    customer.Id,
+                    customer.ApplicationUserId,
+                    customer.Name,
+                    customer.Company,
+                    customer.CreatedAtUtc,
+                    customer.UpdatedAtUtc,
+                    customer.ContactDetails
+                        .Where(detail => detail.Channel == ContactChannel.Email)
+                        .OrderByDescending(detail => detail.IsPrimary)
+                        .ThenBy(detail => detail.CreatedAtUtc)
+                        .Select(detail => detail.Value)
+                        .FirstOrDefault()))
+                .ToListAsync();
 
-            var response = MapToCustomerProfileResponse(customer);
-
-            return Results.Created($"/api/customers/{customer.Id}", response);
+            return Results.Ok(new CustomerListResponse(resolvedPage, resolvedPageSize, totalCount, items));
         })
-        .RequireAuthorization("Permission:" + Permissions.CustomersWrite)
-        .WithName("CreateCustomerProfile")
-        .WithSummary("Create a customer profile with optional contact details");
+        .RequireAuthorization("Permission:" + Permissions.CustomersRead)
+        .WithName("ListCustomerProfiles")
+        .WithSummary("List customer profiles for browse workflows");
 
         group.MapGet("/{customerId:guid}", async (Guid customerId, CustomerManagementDbContext dbContext) =>
         {
@@ -207,6 +239,7 @@ public static class CustomerProfileEndpoints
 
         return new CustomerProfileResponse(
             customer.Id,
+            customer.ApplicationUserId,
             customer.Name,
             customer.Company,
             customer.CreatedAtUtc,
@@ -283,3 +316,18 @@ public static class CustomerProfileEndpoints
         return errors;
     }
 }
+
+public sealed record CustomerListItemResponse(
+    Guid Id,
+    Guid? ApplicationUserId,
+    string Name,
+    string? Company,
+    DateTime CreatedAtUtc,
+    DateTime UpdatedAtUtc,
+    string? PrimaryEmail);
+
+public sealed record CustomerListResponse(
+    int Page,
+    int PageSize,
+    int TotalCount,
+    IReadOnlyList<CustomerListItemResponse> Items);

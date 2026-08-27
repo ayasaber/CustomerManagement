@@ -4,10 +4,10 @@ import { Observable, catchError, throwError } from 'rxjs';
 import {
   ApiValidationError,
   CreateCustomerNoteRequest,
-  CreateCustomerProfileRequest,
   CustomerAttachmentResponse,
   CustomerContactDetailsResponse,
   CustomerInteractionHistoryResponse,
+  CustomerListResponse,
   CustomerNoteResponse,
   CustomerProfileResponse,
   UpdateCustomerProfileRequest
@@ -23,9 +23,19 @@ export class CustomerManagementApiService {
     private readonly authService: AuthService
   ) {}
 
-  createProfile(request: CreateCustomerProfileRequest): Observable<CustomerProfileResponse> {
+  listCustomers(page = 1, pageSize = 50, search = ''): Observable<CustomerListResponse> {
+    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    if (search.trim().length > 0) {
+      params = params.set('search', search.trim());
+    }
+
     return this.authService
-      .withAutoRefresh(() => this.http.post<CustomerProfileResponse>(this.baseUrl, request, { headers: this.buildHeaders() }))
+      .withAutoRefresh(() =>
+        this.http.get<CustomerListResponse>(this.baseUrl, {
+          headers: this.buildHeaders(),
+          params
+        })
+      )
       .pipe(catchError((error) => this.mapError(error)));
   }
 

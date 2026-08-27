@@ -31,6 +31,12 @@ export class App {
 
     const links: Array<{ label: string; link: string }> = [];
     const roles = user.roles.map((role) => role.toLowerCase());
+    const canUseTickets =
+      roles.includes('agent') ||
+      roles.includes('admin') ||
+      roles.includes('customer') ||
+      this.hasPermission(user, 'tickets.read') ||
+      this.hasPermission(user, 'tickets.write');
 
     if (roles.includes('admin') || this.hasPermission(user, 'admin.console.access') || this.hasPermission(user, 'admin.users.manage')) {
       links.push({ label: 'Admin Console', link: '/admin/users' });
@@ -38,8 +44,11 @@ export class App {
 
     if (roles.includes('agent') || roles.includes('admin') || this.hasPermission(user, 'customers.read')) {
       links.push({ label: 'Customer Workspace', link: '/customers' });
-      links.push({ label: 'Tickets', link: '/tickets' });
       links.push({ label: 'Agent Dashboard', link: '/agent/dashboard' });
+    }
+
+    if (canUseTickets) {
+      links.push({ label: 'Tickets', link: '/tickets' });
     }
 
     if (roles.includes('customer')) {

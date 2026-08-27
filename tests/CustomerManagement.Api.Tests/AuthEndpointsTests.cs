@@ -122,6 +122,19 @@ public sealed class AuthEndpointsTests : IClassFixture<CustomerManagementApiFact
 
     private static RegisterRequest NewRegisterRequest(string email, string accountType, string password = "Agent!23456")
     {
+        if (string.Equals(accountType, "customer", StringComparison.OrdinalIgnoreCase))
+        {
+            return new RegisterRequest(
+                email,
+                password,
+                password,
+                "Integration User",
+                accountType,
+                "Integration User",
+                "Contoso",
+                [new RegisterContactDetailRequest(1, email, "work", true)]);
+        }
+
         return new RegisterRequest(
             email,
             password,

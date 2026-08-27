@@ -2,6 +2,7 @@ namespace CustomerManagement.Api.Contracts.Customers;
 
 public sealed record CustomerProfileResponse(
     Guid Id,
+    Guid? ApplicationUserId,
     string Name,
     string? Company,
     DateTime CreatedAtUtc,

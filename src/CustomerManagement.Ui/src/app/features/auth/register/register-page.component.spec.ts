@@ -41,18 +41,28 @@ describe('RegisterPageComponent', () => {
   });
 
   it('completes role selection then submits register payload', () => {
-    component.selectRole('agent');
+    component.selectRole('customer');
     component.form.patchValue({
       displayName: 'Aya Hassan',
       email: 'aya@crm.local',
       password: 'Agent!23456',
-      confirmPassword: 'Agent!23456'
+      confirmPassword: 'Agent!23456',
+      fullName: 'Aya Hassan',
+      company: 'Contoso',
+      primaryContactChannel: 1,
+      primaryContactValue: 'aya@crm.local',
+      primaryContactLabel: 'work'
     });
 
     component.submit();
 
     expect(authStub.register).toHaveBeenCalledWith(
-      jasmine.objectContaining({ accountType: 'agent', email: 'aya@crm.local' })
+      jasmine.objectContaining({
+        accountType: 'customer',
+        email: 'aya@crm.local',
+        fullName: 'Aya Hassan',
+        company: 'Contoso'
+      })
     );
     expect(router.navigateByUrl).toHaveBeenCalledWith('/agent/dashboard');
   });

@@ -10,7 +10,7 @@
         }
       ],
       "UpstreamPathTemplate": "/api/customers",
-      "UpstreamHttpMethod": [ "POST" ],
+      "UpstreamHttpMethod": [ "GET", "POST" ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
       },

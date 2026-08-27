@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import {
@@ -8,6 +8,7 @@ import {
   TicketListItemResponse,
   TicketPriorityResponse
 } from '../../core/models/ticket-management.models';
+import { AuthService } from '../../core/services/auth.service';
 import { TicketManagementApiService } from '../../core/services/ticket-management-api.service';
 
 @Component({
@@ -19,18 +20,23 @@ import { TicketManagementApiService } from '../../core/services/ticket-managemen
 })
 export class TicketManagementPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
 
   readonly tickets = signal<TicketListItemResponse[]>([]);
   readonly categories = signal<TicketCategoryResponse[]>([]);
   readonly priorities = signal<TicketPriorityResponse[]>([]);
   readonly selectedHistory = signal<TicketHistoryItemResponse[]>([]);
+  readonly selectedHistoryTicket = signal<TicketListItemResponse | null>(null);
 
   readonly loading = signal(false);
   readonly error = signal('');
   readonly success = signal('');
+  readonly canAssignOthers = computed(() => this.authService.hasRole('admin'));
+  readonly canSelfAssign = computed(() => this.authService.hasRole('admin') || this.authService.hasRole('agent'));
+  readonly isCustomer = computed(() => this.authService.hasRole('customer'));
 
   readonly createForm = this.formBuilder.nonNullable.group({
-    customerId: ['', [Validators.required]],
+    customerUserId: [''],
     categoryId: ['', [Validators.required]],
     priorityId: ['', [Validators.required]],
     subject: ['', [Validators.required, Validators.maxLength(200)]],
@@ -40,6 +46,11 @@ export class TicketManagementPageComponent implements OnInit {
   readonly statusForm = this.formBuilder.nonNullable.group({
     ticketId: ['', [Validators.required]],
     targetStatus: ['in_progress', [Validators.required]]
+  });
+
+  readonly assignForm = this.formBuilder.nonNullable.group({
+    ticketId: ['', [Validators.required]],
+    assigneeUserId: ['', [Validators.required]]
   });
 
   constructor(
@@ -58,10 +69,16 @@ export class TicketManagementPageComponent implements OnInit {
 
     const value = this.createForm.getRawValue();
 
+    if (!this.isCustomer() && !value.customerUserId.trim()) {
+      this.error.set('Select a customer user before creating a ticket.');
+      return;
+    }
+
     this.beginRequest();
+    const customerUserId = value.customerUserId.trim();
     this.api
       .createTicket({
-        customerId: value.customerId.trim(),
+        customerUserId: this.isCustomer() ? undefined : customerUserId,
         categoryId: value.categoryId,
         priorityId: value.priorityId,
         subject: value.subject.trim(),
@@ -71,7 +88,7 @@ export class TicketManagementPageComponent implements OnInit {
       .subscribe({
         next: (ticket) => {
           this.success.set(`Ticket ${ticket.id} created.`);
-          this.createForm.controls.customerId.reset('');
+          this.createForm.controls.customerUserId.reset('');
           this.createForm.controls.subject.reset('');
           this.createForm.controls.description.reset('');
           this.loadTickets();
@@ -108,7 +125,62 @@ export class TicketManagementPageComponent implements OnInit {
       });
   }
 
+  assignTicket(): void {
+    if (this.assignForm.invalid) {
+      return;
+    }
+
+    const value = this.assignForm.getRawValue();
+    const ticket = this.tickets().find((row) => row.id === value.ticketId.trim());
+    if (!ticket) {
+      this.error.set('Select a ticket from the list first.');
+      return;
+    }
+
+    this.beginRequest();
+    this.api
+      .assignTicket(ticket.id, {
+        assigneeUserId: value.assigneeUserId.trim(),
+        rowVersion: ticket.rowVersion
+      })
+      .pipe(finalize(() => this.finishRequest()))
+      .subscribe({
+        next: (updated) => {
+          this.success.set(`Ticket ${updated.id} assigned successfully.`);
+          this.assignForm.controls.assigneeUserId.reset('');
+          this.loadTickets();
+        },
+        error: (err: Error) => this.error.set(`Assign ticket failed: ${err.message}`)
+      });
+  }
+
+  assignSelf(): void {
+    const ticketId = this.statusForm.controls.ticketId.value.trim();
+    const ticket = this.tickets().find((row) => row.id === ticketId);
+    if (!ticket) {
+      this.error.set('Select a ticket from the list first.');
+      return;
+    }
+
+    this.beginRequest();
+    this.api
+      .assignSelf(ticket.id, {
+        rowVersion: ticket.rowVersion
+      })
+      .pipe(finalize(() => this.finishRequest()))
+      .subscribe({
+        next: (updated) => {
+          this.success.set(`Ticket ${updated.id} self-assigned successfully.`);
+          this.loadTickets();
+        },
+        error: (err: Error) => this.error.set(`Self-assign failed: ${err.message}`)
+      });
+  }
+
   loadHistory(ticketId: string): void {
+    const selectedTicket = this.tickets().find((row) => row.id === ticketId) ?? null;
+    this.selectedHistoryTicket.set(selectedTicket);
+
     this.beginRequest(false);
     this.api
       .getHistory(ticketId)
@@ -139,7 +211,81 @@ export class TicketManagementPageComponent implements OnInit {
 
   selectTicketForStatus(ticketId: string): void {
     this.statusForm.controls.ticketId.setValue(ticketId);
+    this.assignForm.controls.ticketId.setValue(ticketId);
     this.success.set(`Ticket ${ticketId} selected for status transition.`);
+  }
+
+  getHistoryFieldLabel(fieldName: string): string {
+    const normalized = (fieldName || '').trim();
+    if (!normalized) {
+      return 'Details';
+    }
+
+    const fieldLabels: Record<string, string> = {
+      assignedToUserId: 'Assigned Agent',
+      status: 'Status',
+      categoryId: 'Category',
+      priorityId: 'Priority',
+      subject: 'Subject',
+      description: 'Description',
+      isEscalated: 'Escalation'
+    };
+
+    if (fieldLabels[normalized]) {
+      return fieldLabels[normalized];
+    }
+
+    return normalized
+      .replace(/[_\.]+/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/^./, (first) => first.toUpperCase());
+  }
+
+  getHistoryValueDisplay(item: TicketHistoryItemResponse, value: string | null): string {
+    if (!value) {
+      return '-';
+    }
+
+    if (item.fieldName === 'assignedToUserId') {
+      return this.getAgentDisplay(value);
+    }
+
+    return value;
+  }
+
+  getHistoryActorDisplay(item: TicketHistoryItemResponse): string {
+    return item.actorEmail || item.actorUserId || 'System';
+  }
+
+  private getAgentDisplay(agentUserId: string): string {
+    const trimmed = agentUserId.trim();
+    if (!trimmed) {
+      return '-';
+    }
+
+    const selectedTicket = this.selectedHistoryTicket();
+    if (
+      selectedTicket?.assignedToUserId &&
+      selectedTicket.assignedToUserId.toLowerCase() === trimmed.toLowerCase() &&
+      selectedTicket.assignedToUserEmail
+    ) {
+      return selectedTicket.assignedToUserEmail;
+    }
+
+    const matchedTicket = this.tickets().find(
+      (ticket) =>
+        !!ticket.assignedToUserId &&
+        ticket.assignedToUserId.toLowerCase() === trimmed.toLowerCase() &&
+        !!ticket.assignedToUserEmail
+    );
+
+    if (matchedTicket?.assignedToUserEmail) {
+      return matchedTicket.assignedToUserEmail;
+    }
+
+    return `Agent (${trimmed})`;
   }
 
   private refreshTaxonomy(): void {

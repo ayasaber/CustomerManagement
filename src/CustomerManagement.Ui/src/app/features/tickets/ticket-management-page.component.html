@@ -10,10 +10,11 @@
   <div class="panel-grid">
     <form [formGroup]="createForm" (ngSubmit)="createTicket()" class="panel">
       <h3>Create Ticket</h3>
-      <label>
-        Customer Id
-        <input type="text" formControlName="customerId" placeholder="00000000-0000-0000-0000-000000000000" />
+      <label *ngIf="!isCustomer()">
+        Customer User Id
+        <input type="text" formControlName="customerUserId" placeholder="00000000-0000-0000-0000-000000000000" />
       </label>
+      <p *ngIf="isCustomer()" class="hint">Customer profile will be bound automatically from your logged-in account.</p>
       <label>
         Category
         <select formControlName="categoryId">
@@ -57,7 +58,33 @@
           <option value="closed">Closed</option>
         </select>
       </label>
-      <button type="submit" [disabled]="statusForm.invalid || loading()">Update Status</button>
+      <div class="status-actions">
+        <button type="submit" [disabled]="statusForm.invalid || loading()">Update Status</button>
+        <button
+          *ngIf="canSelfAssign()"
+          type="button"
+          class="secondary-btn"
+          (click)="assignSelf()"
+          [disabled]="!statusForm.controls.ticketId.value || loading()">
+          Self-Assign Selected Ticket
+        </button>
+      </div>
+    </form>
+
+    <form *ngIf="canAssignOthers()" [formGroup]="assignForm" (ngSubmit)="assignTicket()" class="panel">
+      <h3>Assign To Agent</h3>
+      <label>
+        Ticket
+        <select formControlName="ticketId">
+          <option value="">Select ticket from current list</option>
+          <option *ngFor="let ticket of tickets()" [value]="ticket.id">{{ ticket.id }} - {{ ticket.subject }}</option>
+        </select>
+      </label>
+      <label>
+        Agent User Id
+        <input type="text" formControlName="assigneeUserId" placeholder="00000000-0000-0000-0000-000000000000" />
+      </label>
+      <button type="submit" [disabled]="assignForm.invalid || loading()">Assign Ticket</button>
     </form>
   </div>
 
@@ -104,8 +131,11 @@
     <ul class="history-list">
       <li *ngFor="let item of selectedHistory()">
         <strong>{{ item.actionType }}</strong>
-        <span>{{ item.fieldName }}: {{ item.oldValue ?? '-' }} -> {{ item.newValue ?? '-' }}</span>
-        <small>{{ item.occurredAtUtc | date: 'short' }}</small>
+        <span>
+          {{ getHistoryFieldLabel(item.fieldName) }}:
+          {{ getHistoryValueDisplay(item, item.oldValue) }} -> {{ getHistoryValueDisplay(item, item.newValue) }}
+        </span>
+        <small>By {{ getHistoryActorDisplay(item) }} • {{ item.occurredAtUtc | date: 'short' }}</small>
       </li>
     </ul>
   </section>

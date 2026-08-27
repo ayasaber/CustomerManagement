@@ -2,10 +2,12 @@ import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular
 import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError } from 'rxjs';
 import {
+  AssignTicketRequest,
   ApiValidationError,
   CreateTicketCategoryRequest,
   CreateTicketPriorityRequest,
   CreateTicketRequest,
+  SelfAssignTicketRequest,
   TicketCategoryResponse,
   TicketHistoryResponse,
   TicketListResponse,
@@ -51,6 +53,22 @@ export class TicketManagementApiService {
     return this.authService
       .withAutoRefresh(() =>
         this.http.put<TicketResponse>(`${this.baseUrl}/${ticketId}/status`, request, { headers: this.buildHeaders() })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  assignTicket(ticketId: string, request: AssignTicketRequest): Observable<TicketResponse> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.put<TicketResponse>(`${this.baseUrl}/${ticketId}/assign`, request, { headers: this.buildHeaders() })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  assignSelf(ticketId: string, request: SelfAssignTicketRequest): Observable<TicketResponse> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.put<TicketResponse>(`${this.baseUrl}/${ticketId}/self-assign`, request, { headers: this.buildHeaders() })
       )
       .pipe(catchError((error) => this.mapError(error)));
   }

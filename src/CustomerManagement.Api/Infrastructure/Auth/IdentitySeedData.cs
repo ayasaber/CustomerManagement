@@ -152,7 +152,12 @@ public static class IdentitySeedData
                 Permissions.TicketsEscalate,
                 Permissions.TicketsClose
             ],
-            [AuthRoles.Customer] = []
+            [AuthRoles.Customer] =
+            [
+                Permissions.TicketsRead,
+                Permissions.TicketsWrite,
+                Permissions.TicketsClose
+            ]
         };
 
         var existingRolePermissions = await dbContext.RolePermissions

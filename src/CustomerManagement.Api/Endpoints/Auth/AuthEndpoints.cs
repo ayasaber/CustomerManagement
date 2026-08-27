@@ -1,4 +1,5 @@
 using CustomerManagement.Api.Contracts.Auth;
+using CustomerManagement.Api.Domain.Customers;
 using CustomerManagement.Api.Domain.Security;
 using CustomerManagement.Api.Infrastructure.Auditing;
 using CustomerManagement.Api.Infrastructure.Auth;
@@ -64,6 +65,15 @@ public static class AuthEndpoints
             });
         }
 
+        if (normalizedAccountType == AuthRoles.Customer)
+        {
+            var registrationErrors = ValidateCustomerRegistrationProfile(request);
+            if (registrationErrors.Count > 0)
+            {
+                return Results.ValidationProblem(registrationErrors);
+            }
+        }
+
         var existing = await userManager.FindByEmailAsync(request.Email);
         if (existing is not null)
         {
@@ -106,6 +116,36 @@ public static class AuthEndpoints
                 message = "Registration failed.",
                 errors = roleResult.Errors.Select(e => e.Description)
             });
+        }
+
+        if (normalizedAccountType == AuthRoles.Customer)
+        {
+            var nowUtc = DateTime.UtcNow;
+            var customer = new Customer
+            {
+                Id = Guid.NewGuid(),
+                ApplicationUserId = user.Id,
+                Name = request.FullName!.Trim(),
+                Company = request.Company!.Trim(),
+                CreatedAtUtc = nowUtc,
+                UpdatedAtUtc = nowUtc
+            };
+
+            foreach (var detail in request.ContactDetails!)
+            {
+                customer.ContactDetails.Add(new ContactDetail
+                {
+                    Id = Guid.NewGuid(),
+                    CustomerId = customer.Id,
+                    Channel = (ContactChannel)detail.Channel,
+                    Value = detail.Value.Trim(),
+                    Label = string.IsNullOrWhiteSpace(detail.Label) ? null : detail.Label.Trim(),
+                    IsPrimary = detail.IsPrimary,
+                    CreatedAtUtc = nowUtc
+                });
+            }
+
+            dbContext.Customers.Add(customer);
         }
 
         var roles = await userManager.GetRolesAsync(user);
@@ -260,5 +300,87 @@ public static class AuthEndpoints
         return value is not null && int.TryParse(value, out var parsed)
             ? Math.Clamp(parsed, 6, 128)
             : fallback;
+    }
+
+    private static Dictionary<string, string[]> ValidateCustomerRegistrationProfile(RegisterRequest request)
+    {
+        var errors = new Dictionary<string, string[]>();
+
+        if (string.IsNullOrWhiteSpace(request.FullName))
+        {
+            errors[nameof(request.FullName)] = ["FullName is required for customer registration."];
+        }
+        else if (request.FullName.Trim().Length > 200)
+        {
+            errors[nameof(request.FullName)] = ["FullName must be 200 characters or fewer."];
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Company))
+        {
+            errors[nameof(request.Company)] = ["Company is required for customer registration."];
+        }
+        else if (request.Company.Trim().Length > 200)
+        {
+            errors[nameof(request.Company)] = ["Company must be 200 characters or fewer."];
+        }
+
+        if (request.ContactDetails is null || request.ContactDetails.Count == 0)
+        {
+            errors[nameof(request.ContactDetails)] = ["At least one primary contact is required for customer registration."];
+            return errors;
+        }
+
+        var primaryByChannel = new Dictionary<int, int>();
+        var hasPrimaryEmailOrPhone = false;
+
+        for (var i = 0; i < request.ContactDetails.Count; i++)
+        {
+            var detail = request.ContactDetails[i];
+            var prefix = $"{nameof(request.ContactDetails)}[{i}]";
+
+            if (!Enum.IsDefined(typeof(ContactChannel), detail.Channel))
+            {
+                errors[$"{prefix}.Channel"] = ["Channel is invalid."];
+            }
+
+            if (string.IsNullOrWhiteSpace(detail.Value))
+            {
+                errors[$"{prefix}.Value"] = ["Value is required."];
+            }
+            else if (detail.Value.Trim().Length > 320)
+            {
+                errors[$"{prefix}.Value"] = ["Value must be 320 characters or fewer."];
+            }
+
+            if (!string.IsNullOrWhiteSpace(detail.Label) && detail.Label.Trim().Length > 100)
+            {
+                errors[$"{prefix}.Label"] = ["Label must be 100 characters or fewer."];
+            }
+
+            if (!detail.IsPrimary)
+            {
+                continue;
+            }
+
+            primaryByChannel.TryGetValue(detail.Channel, out var count);
+            primaryByChannel[detail.Channel] = count + 1;
+
+            if (detail.Channel is (int)ContactChannel.Email or (int)ContactChannel.Phone)
+            {
+                hasPrimaryEmailOrPhone = true;
+            }
+        }
+
+        foreach (var pair in primaryByChannel.Where(pair => pair.Value > 1))
+        {
+            errors[$"{nameof(request.ContactDetails)}.Channel.{pair.Key}.Primary"] = ["Only one primary contact is allowed per channel."];
+        }
+
+        if (!hasPrimaryEmailOrPhone)
+        {
+            errors[nameof(request.ContactDetails)] = ["At least one primary Email or Phone contact is required."];
+        }
+
+        return errors;
     }
 }

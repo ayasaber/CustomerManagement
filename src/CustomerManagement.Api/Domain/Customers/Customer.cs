@@ -1,10 +1,15 @@
 using System.ComponentModel.DataAnnotations;
+using CustomerManagement.Api.Domain.Security;
 
 namespace CustomerManagement.Api.Domain.Customers;
 
 public sealed class Customer
 {
     public Guid Id { get; set; }
+
+    public Guid? ApplicationUserId { get; set; }
+
+    public ApplicationUser? ApplicationUser { get; set; }
 
     public string Name { get; set; } = string.Empty;
 

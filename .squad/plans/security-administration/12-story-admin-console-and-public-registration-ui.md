@@ -20,6 +20,7 @@ User-visible outcomes:
 1. Admin can manage users, roles, permissions, audit logs, and settings from one console.
 2. Public registration starts with Agent vs Customer role cards and submits role-specific registration.
 3. Login/registration redirects to Agent Dashboard or Customer Portal route.
+4. Customer registration captures required profile fields and creates customer profile during registration.
 
 Out of scope:
 
@@ -91,7 +92,15 @@ Create file: `src/CustomerManagement.Ui/src/app/features/auth/register/register-
   - Step 2: registration form with selected role displayed and locked.
 - Form fields:
   - `displayName`, `email`, `password`, `confirmPassword`.
+  - Customer role only (required): `fullName`, `company`, and at least one primary contact (`email` or `phone`).
+  - Agent role keeps basic registration fields only.
 - Submission uses `/api/auth/register` and stores returned tokens.
+
+Registration/profile lifecycle rule:
+
+1. Customer profile is created by registration flow only.
+2. Agent-side profile creation is not part of this flow.
+3. Duplicate email registration is blocked.
 
 ### 4. Build login page
 

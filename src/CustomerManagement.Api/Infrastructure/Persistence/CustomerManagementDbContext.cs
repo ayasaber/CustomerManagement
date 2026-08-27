@@ -205,6 +205,7 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
         {
             entity.ToTable("Customers");
             entity.HasKey(c => c.Id);
+            entity.Property(c => c.ApplicationUserId);
             entity.Property(c => c.Name)
                 .HasMaxLength(200)
                 .IsRequired();
@@ -216,6 +217,15 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
                 .IsRequired();
             entity.Property(c => c.RowVersion)
                 .IsRowVersion();
+
+            entity.HasIndex(c => c.ApplicationUserId)
+                .IsUnique()
+                .HasFilter("[ApplicationUserId] IS NOT NULL");
+
+            entity.HasOne(c => c.ApplicationUser)
+                .WithMany()
+                .HasForeignKey(c => c.ApplicationUserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasMany(c => c.ContactDetails)
                 .WithOne(cd => cd.Customer)

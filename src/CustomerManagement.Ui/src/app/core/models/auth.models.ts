@@ -1,9 +1,19 @@
+export interface RegisterContactDetailRequest {
+  channel: number;
+  value: string;
+  label?: string | null;
+  isPrimary: boolean;
+}
+
 export interface RegisterRequest {
   email: string;
   password: string;
   confirmPassword: string;
   displayName: string;
   accountType: 'agent' | 'customer';
+  fullName?: string;
+  company?: string;
+  contactDetails?: RegisterContactDetailRequest[];
 }
 
 export interface LoginRequest {

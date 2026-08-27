@@ -29,12 +29,30 @@ export interface CustomerContactDetailResponse {
 
 export interface CustomerProfileResponse {
   id: string;
+  applicationUserId?: string | null;
   name: string;
   company?: string | null;
   createdAtUtc: string;
   updatedAtUtc: string;
   rowVersion: string;
   contactDetails: CustomerContactDetailResponse[];
+}
+
+export interface CustomerListItemResponse {
+  id: string;
+  applicationUserId?: string | null;
+  name: string;
+  company?: string | null;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+  primaryEmail?: string | null;
+}
+
+export interface CustomerListResponse {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  items: CustomerListItemResponse[];
 }
 
 export interface CustomerContactDetailsResponse {

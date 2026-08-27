@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
+using CustomerManagement.Api.Contracts.Auth;
 using CustomerManagement.Api.Contracts.Customers;
 using CustomerManagement.Api.Domain.Customers;
+using CustomerManagement.Api.Endpoints.Customers;
 using CustomerManagement.Api.Infrastructure.Persistence;
 using CustomerManagement.Api.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -120,17 +122,41 @@ public sealed class CustomerInteractionHistoryEndpointsTests : IClassFixture<Cus
 
     private async Task<CustomerProfileResponse> CreateCustomerAsync(string name, string company)
     {
-        using var request = NewAgentJsonRequest(
-            HttpMethod.Post,
-            "/api/customers",
-            new CreateCustomerProfileRequest(name, company, null));
+        var email = $"history-{Guid.NewGuid():N}@crm.local";
+        var registerRequest = new RegisterRequest(
+            email,
+            "Agent!23456",
+            "Agent!23456",
+            name,
+            "customer",
+            name,
+            company,
+            [new RegisterContactDetailRequest(1, email, "work", true)]);
 
-        var response = await _client.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+        var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+        registerResponse.EnsureSuccessStatusCode();
 
-        var payload = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
-        Assert.NotNull(payload);
-        return payload!;
+        var tokenPayload = await registerResponse.Content.ReadFromJsonAsync<TokenResponse>();
+        Assert.NotNull(tokenPayload);
+        var userId = Guid.Parse(tokenPayload!.UserId);
+
+        using var listRequest = NewAgentRequest(HttpMethod.Get, "/api/customers?page=1&pageSize=200");
+        var listResponse = await _client.SendAsync(listRequest);
+        listResponse.EnsureSuccessStatusCode();
+
+        var listPayload = await listResponse.Content.ReadFromJsonAsync<CustomerListResponse>();
+        Assert.NotNull(listPayload);
+
+        var customer = listPayload!.Items.FirstOrDefault(item => item.ApplicationUserId == userId);
+        Assert.NotNull(customer);
+
+        using var profileRequest = NewAgentRequest(HttpMethod.Get, $"/api/customers/{customer!.Id}");
+        var profileResponse = await _client.SendAsync(profileRequest);
+        profileResponse.EnsureSuccessStatusCode();
+
+        var profile = await profileResponse.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(profile);
+        return profile!;
     }
 
     private async Task SeedInteractionEventsAsync(Guid customerId, IReadOnlyList<CustomerInteractionEvent> events)

@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
+using CustomerManagement.Api.Contracts.Auth;
 using CustomerManagement.Api.Contracts.Customers;
 using CustomerManagement.Api.Contracts.Tickets;
+using CustomerManagement.Api.Endpoints.Customers;
 using CustomerManagement.Api.Tests.Infrastructure;
 
 namespace CustomerManagement.Api.Tests;
@@ -18,7 +20,8 @@ public sealed class TicketEndpointsTests : IClassFixture<CustomerManagementApiFa
     [Fact]
     public async Task CategoryAndPriority_CanBeCreatedAndListed()
     {
-        var categoryCreate = new CreateTicketCategoryRequest("Billing", "Billing issues");
+        var uniqueSuffix = Guid.NewGuid().ToString("N");
+        var categoryCreate = new CreateTicketCategoryRequest($"Billing-{uniqueSuffix}", "Billing issues");
         using var createCategoryRequest = NewAdminRequest(HttpMethod.Post, "/api/tickets/categories", categoryCreate);
         var createCategoryResponse = await _client.SendAsync(createCategoryRequest);
         Assert.Equal(HttpStatusCode.Created, createCategoryResponse.StatusCode);
@@ -26,7 +29,7 @@ public sealed class TicketEndpointsTests : IClassFixture<CustomerManagementApiFa
         var category = await createCategoryResponse.Content.ReadFromJsonAsync<TicketCategoryResponse>();
         Assert.NotNull(category);
 
-        var priorityCreate = new CreateTicketPriorityRequest("High", 10);
+        var priorityCreate = new CreateTicketPriorityRequest($"High-{uniqueSuffix}", 110);
         using var createPriorityRequest = NewAdminRequest(HttpMethod.Post, "/api/tickets/priorities", priorityCreate);
         var createPriorityResponse = await _client.SendAsync(createPriorityRequest);
         Assert.Equal(HttpStatusCode.Created, createPriorityResponse.StatusCode);
@@ -40,7 +43,7 @@ public sealed class TicketEndpointsTests : IClassFixture<CustomerManagementApiFa
 
         var categories = await listCategoriesResponse.Content.ReadFromJsonAsync<List<TicketCategoryResponse>>();
         Assert.NotNull(categories);
-        Assert.Contains(categories!, row => row.Id == category!.Id && row.Name == "Billing");
+        Assert.Contains(categories!, row => row.Id == category!.Id && row.Name == categoryCreate.Name);
 
         using var listPrioritiesRequest = NewAgentRequest(HttpMethod.Get, "/api/tickets/priorities");
         var listPrioritiesResponse = await _client.SendAsync(listPrioritiesRequest);
@@ -48,7 +51,7 @@ public sealed class TicketEndpointsTests : IClassFixture<CustomerManagementApiFa
 
         var priorities = await listPrioritiesResponse.Content.ReadFromJsonAsync<List<TicketPriorityResponse>>();
         Assert.NotNull(priorities);
-        Assert.Contains(priorities!, row => row.Id == priority!.Id && row.Name == "High");
+        Assert.Contains(priorities!, row => row.Id == priority!.Id && row.Name == priorityCreate.Name);
     }
 
     [Fact]
@@ -59,7 +62,7 @@ public sealed class TicketEndpointsTests : IClassFixture<CustomerManagementApiFa
         var priority = await CreatePriorityAsync("Medium", 20);
 
         var createTicketRequest = new CreateTicketRequest(
-            customer.Id,
+            customer.ApplicationUserId,
             category.Id,
             priority.Id,
             "Login issue",
@@ -96,11 +99,11 @@ public sealed class TicketEndpointsTests : IClassFixture<CustomerManagementApiFa
     public async Task TicketStatus_ReturnsBadRequest_ForInvalidTransition()
     {
         var customer = await CreateCustomerAsync("Transition User", "Contoso");
-        var category = await CreateCategoryAsync("General");
-        var priority = await CreatePriorityAsync("Low", 30);
+        var category = await CreateCategoryAsync($"General-{Guid.NewGuid():N}");
+        var priority = await CreatePriorityAsync($"Low-{Guid.NewGuid():N}", 30);
 
         var createTicketRequest = new CreateTicketRequest(
-            customer.Id,
+            customer.ApplicationUserId,
             category.Id,
             priority.Id,
             "Need update",
@@ -122,14 +125,41 @@ public sealed class TicketEndpointsTests : IClassFixture<CustomerManagementApiFa
 
     private async Task<CustomerProfileResponse> CreateCustomerAsync(string name, string company)
     {
-        var request = new CreateCustomerProfileRequest(name, company, null);
-        using var httpRequest = NewAgentRequest(HttpMethod.Post, "/api/customers", request);
-        var response = await _client.SendAsync(httpRequest);
-        response.EnsureSuccessStatusCode();
+        var email = $"customer-{Guid.NewGuid():N}@crm.local";
+        var registerRequest = new RegisterRequest(
+            email,
+            "Agent!23456",
+            "Agent!23456",
+            name,
+            "customer",
+            name,
+            company,
+            [new RegisterContactDetailRequest(1, email, "work", true)]);
 
-        var payload = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
-        Assert.NotNull(payload);
-        return payload!;
+        var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+        registerResponse.EnsureSuccessStatusCode();
+
+        var tokenPayload = await registerResponse.Content.ReadFromJsonAsync<TokenResponse>();
+        Assert.NotNull(tokenPayload);
+        var userId = Guid.Parse(tokenPayload!.UserId);
+
+        using var getRequest = NewAgentRequest(HttpMethod.Get, "/api/customers?page=1&pageSize=100");
+        var listResponse = await _client.SendAsync(getRequest);
+        listResponse.EnsureSuccessStatusCode();
+
+        var listPayload = await listResponse.Content.ReadFromJsonAsync<CustomerListResponse>();
+        Assert.NotNull(listPayload);
+
+        var customer = listPayload!.Items.FirstOrDefault(item => item.ApplicationUserId == userId);
+        Assert.NotNull(customer);
+
+        using var profileRequest = NewAgentRequest(HttpMethod.Get, $"/api/customers/{customer!.Id}");
+        var profileResponse = await _client.SendAsync(profileRequest);
+        profileResponse.EnsureSuccessStatusCode();
+
+        var profile = await profileResponse.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(profile);
+        return profile!;
     }
 
     private async Task<TicketCategoryResponse> CreateCategoryAsync(string name)

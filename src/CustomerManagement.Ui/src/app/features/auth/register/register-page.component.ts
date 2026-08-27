@@ -41,7 +41,7 @@ import { AuthService } from '../../../core/services/auth.service';
           <p class="auth-subtitle selected-pill">Selected role: {{ selectedRole() }}</p>
 
           <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
-            <label>
+            <label *ngIf="!isCustomerRole()">
               Display Name
               <input type="text" formControlName="displayName" placeholder="Aya Hassan" />
             </label>
@@ -60,6 +60,36 @@ import { AuthService } from '../../../core/services/auth.service';
               Confirm Password
               <input type="password" formControlName="confirmPassword" placeholder="••••••••" />
             </label>
+
+            <ng-container *ngIf="isCustomerRole()">
+              <label>
+                Full Name
+                <input type="text" formControlName="fullName" placeholder="Aya Hassan" />
+              </label>
+
+              <label>
+                Company
+                <input type="text" formControlName="company" placeholder="Contoso" />
+              </label>
+
+              <label>
+                Primary Contact Type
+                <select formControlName="primaryContactChannel">
+                  <option [ngValue]="1">Email</option>
+                  <option [ngValue]="6">Phone</option>
+                </select>
+              </label>
+
+              <label>
+                Primary Contact Value
+                <input type="text" formControlName="primaryContactValue" placeholder="name@company.com or +201000000000" />
+              </label>
+
+              <label>
+                Primary Contact Label
+                <input type="text" formControlName="primaryContactLabel" placeholder="work" />
+              </label>
+            </ng-container>
 
             <p *ngIf="passwordMismatch()" class="auth-status error">
               Password and confirm password must match.
@@ -132,12 +162,18 @@ export class RegisterPageComponent {
   readonly selectedRole = signal<'agent' | 'customer' | null>(null);
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly isCustomerRole = computed(() => this.selectedRole() === 'customer');
 
   readonly form = this.formBuilder.nonNullable.group({
     displayName: ['', [Validators.required, Validators.maxLength(200)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
-    confirmPassword: ['', [Validators.required]]
+    confirmPassword: ['', [Validators.required]],
+    fullName: [''],
+    company: [''],
+    primaryContactChannel: [1],
+    primaryContactValue: [''],
+    primaryContactLabel: ['work']
   });
 
   readonly passwordMismatch = computed(
@@ -149,6 +185,23 @@ export class RegisterPageComponent {
 
   selectRole(role: 'agent' | 'customer'): void {
     this.selectedRole.set(role);
+
+    if (role === 'customer') {
+      this.form.controls.displayName.clearValidators();
+      this.form.controls.fullName.addValidators([Validators.required, Validators.maxLength(200)]);
+      this.form.controls.company.addValidators([Validators.required, Validators.maxLength(200)]);
+      this.form.controls.primaryContactValue.addValidators([Validators.required, Validators.maxLength(320)]);
+    } else {
+      this.form.controls.displayName.addValidators([Validators.required, Validators.maxLength(200)]);
+      this.form.controls.fullName.clearValidators();
+      this.form.controls.company.clearValidators();
+      this.form.controls.primaryContactValue.clearValidators();
+    }
+
+    this.form.controls.displayName.updateValueAndValidity();
+    this.form.controls.fullName.updateValueAndValidity();
+    this.form.controls.company.updateValueAndValidity();
+    this.form.controls.primaryContactValue.updateValueAndValidity();
   }
 
   clearRole(): void {
@@ -176,6 +229,20 @@ export class RegisterPageComponent {
       confirmPassword: this.form.controls.confirmPassword.value,
       accountType: this.selectedRole()!
     };
+
+    if (request.accountType === 'customer') {
+      request.fullName = this.form.controls.fullName.value.trim();
+      request.displayName = request.fullName;
+      request.company = this.form.controls.company.value.trim();
+      request.contactDetails = [
+        {
+          channel: this.form.controls.primaryContactChannel.value,
+          value: this.form.controls.primaryContactValue.value.trim(),
+          label: this.form.controls.primaryContactLabel.value.trim(),
+          isPrimary: true
+        }
+      ];
+    }
 
     this.authService
       .register(request)
