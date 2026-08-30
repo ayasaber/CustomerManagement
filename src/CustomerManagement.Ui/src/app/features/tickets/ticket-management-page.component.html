@@ -105,7 +105,6 @@
           <th>Category</th>
           <th>Priority</th>
           <th>Escalated</th>
-          <th>Status Action</th>
           <th>History</th>
         </tr>
       </thead>
@@ -117,7 +116,6 @@
           <td>{{ ticket.categoryName }}</td>
           <td>{{ ticket.priorityName }}</td>
           <td>{{ ticket.isEscalated ? 'Yes' : 'No' }}</td>
-          <td><button type="button" (click)="selectTicketForStatus(ticket.id)">Use</button></td>
           <td><button type="button" (click)="loadHistory(ticket.id)">Load</button></td>
         </tr>
       </tbody>

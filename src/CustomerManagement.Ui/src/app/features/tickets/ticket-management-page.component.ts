@@ -224,13 +224,6 @@ export class TicketManagementPageComponent implements OnInit {
       });
   }
 
-  selectTicketForStatus(ticketId: string): void {
-    this.statusForm.controls.ticketId.setValue(ticketId);
-    this.assignForm.controls.ticketId.setValue(ticketId);
-    this.onSelectedTicketChanged();
-    this.success.set(`Ticket ${ticketId} selected for status transition.`);
-  }
-
   onSelectedTicketChanged(): void {
     const options = this.getAvailableTargetStatuses();
     const selectedTarget = this.statusForm.controls.targetStatus.value;
