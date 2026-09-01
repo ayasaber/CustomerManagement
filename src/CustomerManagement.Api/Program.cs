@@ -110,6 +110,7 @@ app.MapTicketCategoryEndpoints();
 app.MapTicketPriorityEndpoints();
 app.MapTicketEndpoints();
 app.MapAgentDashboardEndpoints();
+app.MapTicketTasksEndpoints();
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
 app.MapPermissionsEndpoints();

@@ -1,4 +1,5 @@
 using CustomerManagement.Api.Domain.Customers;
+using CustomerManagement.Api.Domain.Dashboard;
 using CustomerManagement.Api.Domain.Security;
 using CustomerManagement.Api.Domain.Tickets;
 using Microsoft.AspNetCore.Identity;
@@ -37,6 +38,8 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
     public DbSet<TicketPriority> TicketPriorities => Set<TicketPriority>();
 
     public DbSet<TicketHistoryEntry> TicketHistoryEntries => Set<TicketHistoryEntry>();
+
+    public DbSet<TicketTask> TicketTasks => Set<TicketTask>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -453,6 +456,51 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(h => new { h.TicketId, h.OccurredAtUtc });
+        });
+
+        modelBuilder.Entity<TicketTask>(entity =>
+        {
+            entity.ToTable("TicketTasks");
+            entity.HasKey(task => task.Id);
+            entity.Property(task => task.Description)
+                .HasMaxLength(500)
+                .IsRequired();
+            entity.Property(task => task.DueAtUtc)
+                .IsRequired();
+            entity.Property(task => task.Status)
+                .HasConversion<int>()
+                .IsRequired();
+            entity.Property(task => task.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(task => task.UpdatedAtUtc)
+                .IsRequired();
+            entity.Property(task => task.CompletedAtUtc);
+            entity.Property(task => task.RowVersion)
+                .IsRowVersion();
+
+            entity.HasOne(task => task.Ticket)
+                .WithMany()
+                .HasForeignKey(task => task.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(task => task.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(task => task.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(task => task.AssignedToUser)
+                .WithMany()
+                .HasForeignKey(task => task.AssignedToUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(task => task.CompletedByUser)
+                .WithMany()
+                .HasForeignKey(task => task.CompletedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(task => new { task.AssignedToUserId, task.Status, task.DueAtUtc });
+            entity.HasIndex(task => new { task.TicketId, task.Status, task.DueAtUtc });
+            entity.HasIndex(task => new { task.CreatedByUserId, task.CreatedAtUtc });
         });
     }
 }

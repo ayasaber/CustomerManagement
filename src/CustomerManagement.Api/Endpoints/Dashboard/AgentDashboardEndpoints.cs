@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CustomerManagement.Api.Contracts.Dashboard;
 using CustomerManagement.Api.Domain.Customers;
+using CustomerManagement.Api.Domain.Dashboard;
 using CustomerManagement.Api.Domain.Tickets;
 using CustomerManagement.Api.Infrastructure.Auth;
 using CustomerManagement.Api.Infrastructure.Persistence;
@@ -118,9 +119,13 @@ public static class AgentDashboardEndpoints
         return Results.Ok(new DashboardAssignedTicketsResponse(totalCount, items));
     }
 
-    private static IResult GetOpenTasksAsync(
+    private static async Task<IResult> GetOpenTasksAsync(
+        bool? assignedToMeOnly,
         int? page,
-        int? pageSize)
+        int? pageSize,
+        HttpContext httpContext,
+        CustomerManagementDbContext dbContext,
+        CancellationToken cancellationToken)
     {
         var resolvedPage = page.GetValueOrDefault(1);
         var resolvedPageSize = pageSize.GetValueOrDefault(20);
@@ -141,7 +146,39 @@ public static class AgentDashboardEndpoints
             return Results.ValidationProblem(errors);
         }
 
-        return Results.Ok(new DashboardOpenTaskSummaryResponse(0, []));
+        var actorUserId = ResolveActorUserId(httpContext.User);
+        if (!actorUserId.HasValue)
+        {
+            return Results.Forbid();
+        }
+
+        var isAdmin = IsAdmin(httpContext.User);
+        var query = dbContext.TicketTasks
+            .AsNoTracking()
+            .Where(task => task.Status == TicketTaskStatus.Open)
+            .AsQueryable();
+
+        if (!isAdmin || assignedToMeOnly.GetValueOrDefault(false))
+        {
+            query = query.Where(task => task.AssignedToUserId == actorUserId.Value);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderBy(task => task.DueAtUtc)
+            .ThenBy(task => task.Id)
+            .Skip((resolvedPage - 1) * resolvedPageSize)
+            .Take(resolvedPageSize)
+            .Select(task => new DashboardOpenTaskSummaryItemResponse(
+                task.Id,
+                task.TicketId,
+                FormatTicketNumber(task.TicketId),
+                task.Description,
+                task.DueAtUtc,
+                task.CreatedAtUtc))
+            .ToListAsync(cancellationToken);
+
+        return Results.Ok(new DashboardOpenTaskSummaryResponse(totalCount, items));
     }
 
     private static async Task<IResult> GetCustomerContextAsync(

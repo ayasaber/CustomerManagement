@@ -62,7 +62,10 @@ public sealed class TestAuthHandler(
                 Permissions.TicketsClose,
                 Permissions.TicketTaxonomyManage,
                 Permissions.DashboardRead,
-                Permissions.DashboardCustomerContextRead
+                Permissions.DashboardCustomerContextRead,
+                Permissions.TicketTasksRead,
+                Permissions.TicketTasksWrite,
+                Permissions.TicketTasksComplete
             ],
             AuthRoles.Agent =>
             [
@@ -74,7 +77,10 @@ public sealed class TestAuthHandler(
                 Permissions.TicketsEscalate,
                 Permissions.TicketsClose,
                 Permissions.DashboardRead,
-                Permissions.DashboardCustomerContextRead
+                Permissions.DashboardCustomerContextRead,
+                Permissions.TicketTasksRead,
+                Permissions.TicketTasksWrite,
+                Permissions.TicketTasksComplete
             ],
             _ => []
         };

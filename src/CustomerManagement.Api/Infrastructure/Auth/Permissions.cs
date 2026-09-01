@@ -19,4 +19,8 @@ public static class Permissions
 
     public const string DashboardRead = "dashboard.read";
     public const string DashboardCustomerContextRead = "dashboard.customer-context.read";
+
+    public const string TicketTasksRead = "ticket-tasks.read";
+    public const string TicketTasksWrite = "ticket-tasks.write";
+    public const string TicketTasksComplete = "ticket-tasks.complete";
 }
