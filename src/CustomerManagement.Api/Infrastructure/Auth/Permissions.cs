@@ -16,4 +16,7 @@ public static class Permissions
     public const string TicketsEscalate = "tickets.escalate";
     public const string TicketsClose = "tickets.close";
     public const string TicketTaxonomyManage = "tickets.taxonomy.manage";
+
+    public const string DashboardRead = "dashboard.read";
+    public const string DashboardCustomerContextRead = "dashboard.customer-context.read";
 }

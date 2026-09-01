@@ -22,10 +22,11 @@ public sealed class TestAuthHandler(
         }
 
         var role = roleValue.ToString().Trim();
+        var userId = ResolveUserId(role, Request.Headers[TestAuthDefaults.UserIdHeader]);
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, "integration-test-user"),
-            new(ClaimTypes.Name, "integration-test-user"),
+            new(ClaimTypes.NameIdentifier, userId.ToString()),
+            new(ClaimTypes.Name, $"integration-test-user-{role}"),
             new(ClaimTypes.Role, role)
         };
 
@@ -59,7 +60,9 @@ public sealed class TestAuthHandler(
                 Permissions.TicketsAssign,
                 Permissions.TicketsEscalate,
                 Permissions.TicketsClose,
-                Permissions.TicketTaxonomyManage
+                Permissions.TicketTaxonomyManage,
+                Permissions.DashboardRead,
+                Permissions.DashboardCustomerContextRead
             ],
             AuthRoles.Agent =>
             [
@@ -69,9 +72,27 @@ public sealed class TestAuthHandler(
                 Permissions.TicketsWrite,
                 Permissions.TicketsAssign,
                 Permissions.TicketsEscalate,
-                Permissions.TicketsClose
+                Permissions.TicketsClose,
+                Permissions.DashboardRead,
+                Permissions.DashboardCustomerContextRead
             ],
             _ => []
+        };
+    }
+
+    private static Guid ResolveUserId(string role, string? headerValue)
+    {
+        if (Guid.TryParse(headerValue, out var parsed))
+        {
+            return parsed;
+        }
+
+        return role.Trim().ToLowerInvariant() switch
+        {
+            AuthRoles.Admin => Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            AuthRoles.Agent => Guid.Parse("22222222-2222-2222-2222-222222222222"),
+            AuthRoles.Customer => Guid.Parse("33333333-3333-3333-3333-333333333333"),
+            _ => Guid.Parse("44444444-4444-4444-4444-444444444444")
         };
     }
 }

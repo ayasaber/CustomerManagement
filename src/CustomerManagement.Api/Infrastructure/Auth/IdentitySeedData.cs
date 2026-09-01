@@ -90,7 +90,9 @@ public static class IdentitySeedData
             [Permissions.TicketsAssign] = "Assign tickets to agents.",
             [Permissions.TicketsEscalate] = "Escalate tickets.",
             [Permissions.TicketsClose] = "Resolve and close tickets.",
-            [Permissions.TicketTaxonomyManage] = "Manage ticket categories and priorities."
+            [Permissions.TicketTaxonomyManage] = "Manage ticket categories and priorities.",
+            [Permissions.DashboardRead] = "Read dashboard assigned work and summaries.",
+            [Permissions.DashboardCustomerContextRead] = "Read customer context for dashboard ticket views."
         };
 
         var existingPermissions = await dbContext.Permissions
@@ -140,7 +142,9 @@ public static class IdentitySeedData
                 Permissions.TicketsAssign,
                 Permissions.TicketsEscalate,
                 Permissions.TicketsClose,
-                Permissions.TicketTaxonomyManage
+                Permissions.TicketTaxonomyManage,
+                Permissions.DashboardRead,
+                Permissions.DashboardCustomerContextRead
             ],
             [AuthRoles.Agent] =
             [
@@ -150,7 +154,9 @@ public static class IdentitySeedData
                 Permissions.TicketsWrite,
                 Permissions.TicketsAssign,
                 Permissions.TicketsEscalate,
-                Permissions.TicketsClose
+                Permissions.TicketsClose,
+                Permissions.DashboardRead,
+                Permissions.DashboardCustomerContextRead
             ],
             [AuthRoles.Customer] =
             [
