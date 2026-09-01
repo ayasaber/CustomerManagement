@@ -65,7 +65,9 @@ public sealed class TestAuthHandler(
                 Permissions.DashboardCustomerContextRead,
                 Permissions.TicketTasksRead,
                 Permissions.TicketTasksWrite,
-                Permissions.TicketTasksComplete
+                Permissions.TicketTasksComplete,
+                Permissions.QuickRepliesRead,
+                Permissions.QuickRepliesManage
             ],
             AuthRoles.Agent =>
             [
@@ -80,7 +82,8 @@ public sealed class TestAuthHandler(
                 Permissions.DashboardCustomerContextRead,
                 Permissions.TicketTasksRead,
                 Permissions.TicketTasksWrite,
-                Permissions.TicketTasksComplete
+                Permissions.TicketTasksComplete,
+                Permissions.QuickRepliesRead
             ],
             _ => []
         };

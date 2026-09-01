@@ -41,6 +41,8 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
 
     public DbSet<TicketTask> TicketTasks => Set<TicketTask>();
 
+    public DbSet<QuickReply> QuickReplies => Set<QuickReply>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -501,6 +503,42 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
             entity.HasIndex(task => new { task.AssignedToUserId, task.Status, task.DueAtUtc });
             entity.HasIndex(task => new { task.TicketId, task.Status, task.DueAtUtc });
             entity.HasIndex(task => new { task.CreatedByUserId, task.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<QuickReply>(entity =>
+        {
+            entity.ToTable("QuickReplies");
+            entity.HasKey(reply => reply.Id);
+            entity.Property(reply => reply.Title)
+                .HasMaxLength(120)
+                .IsRequired();
+            entity.Property(reply => reply.Body)
+                .HasMaxLength(4000)
+                .IsRequired();
+            entity.Property(reply => reply.TagsCsv)
+                .HasMaxLength(500);
+            entity.Property(reply => reply.IsActive)
+                .IsRequired();
+            entity.Property(reply => reply.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(reply => reply.UpdatedAtUtc)
+                .IsRequired();
+            entity.Property(reply => reply.RowVersion)
+                .IsRowVersion();
+
+            entity.HasOne(reply => reply.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(reply => reply.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(reply => reply.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(reply => reply.UpdatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(reply => reply.Title)
+                .IsUnique();
+            entity.HasIndex(reply => new { reply.IsActive, reply.Title });
         });
     }
 }

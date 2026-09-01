@@ -95,7 +95,9 @@ public static class IdentitySeedData
             [Permissions.DashboardCustomerContextRead] = "Read customer context for dashboard ticket views.",
             [Permissions.TicketTasksRead] = "Read ticket-linked tasks.",
             [Permissions.TicketTasksWrite] = "Create and update ticket-linked tasks.",
-            [Permissions.TicketTasksComplete] = "Mark ticket-linked tasks as completed."
+            [Permissions.TicketTasksComplete] = "Mark ticket-linked tasks as completed.",
+            [Permissions.QuickRepliesRead] = "Read shared quick replies.",
+            [Permissions.QuickRepliesManage] = "Manage shared quick replies."
         };
 
         var existingPermissions = await dbContext.Permissions
@@ -150,7 +152,9 @@ public static class IdentitySeedData
                 Permissions.DashboardCustomerContextRead,
                 Permissions.TicketTasksRead,
                 Permissions.TicketTasksWrite,
-                Permissions.TicketTasksComplete
+                Permissions.TicketTasksComplete,
+                Permissions.QuickRepliesRead,
+                Permissions.QuickRepliesManage
             ],
             [AuthRoles.Agent] =
             [
@@ -165,7 +169,8 @@ public static class IdentitySeedData
                 Permissions.DashboardCustomerContextRead,
                 Permissions.TicketTasksRead,
                 Permissions.TicketTasksWrite,
-                Permissions.TicketTasksComplete
+                Permissions.TicketTasksComplete,
+                Permissions.QuickRepliesRead
             ],
             [AuthRoles.Customer] =
             [
