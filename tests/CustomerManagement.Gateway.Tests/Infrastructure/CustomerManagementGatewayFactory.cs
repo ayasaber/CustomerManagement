@@ -26,7 +26,7 @@ public sealed class CustomerManagementGatewayFactory : WebApplicationFactory<Pro
                 ["Jwt:SigningKey"] = TestJwtFactory.SigningKey
             };
 
-            for (var i = 0; i < 36; i++)
+            for (var i = 0; i < 37; i++)
             {
                 overrides[$"Routes:{i}:DownstreamScheme"] = "http";
                 overrides[$"Routes:{i}:DownstreamHostAndPorts:0:Host"] = "127.0.0.1";

@@ -73,7 +73,9 @@ public sealed class TestAuthHandler(
                 Permissions.TicketMentionsNotify,
                 Permissions.TicketHandoffRequestCreate,
                 Permissions.TicketHandoffRespond,
-                Permissions.TicketHandoffForceAssign
+                Permissions.TicketHandoffForceAssign,
+                Permissions.TicketMessagesRead,
+                Permissions.TicketMessagesWrite
             ],
             AuthRoles.Agent =>
             [
@@ -94,7 +96,16 @@ public sealed class TestAuthHandler(
                 Permissions.TicketInternalNotesWrite,
                 Permissions.TicketMentionsNotify,
                 Permissions.TicketHandoffRequestCreate,
-                Permissions.TicketHandoffRespond
+                Permissions.TicketHandoffRespond,
+                Permissions.TicketMessagesRead,
+                Permissions.TicketMessagesWrite
+            ],
+            AuthRoles.Customer =>
+            [
+                Permissions.TicketsRead,
+                Permissions.TicketsWrite,
+                Permissions.TicketsClose,
+                Permissions.TicketMessagesRead
             ],
             _ => []
         };

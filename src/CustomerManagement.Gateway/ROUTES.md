@@ -53,6 +53,7 @@ Customer and ticket-management APIs are exposed via Ocelot under the `/api/custo
 | `/api/ticket-notes/{noteId}/handoff-requests` | `POST` | `/api/ticket-notes/{noteId}/handoff-requests` | Create ticket handoff request |
 | `/api/ticket-notes/handoff-requests/me` | `GET` | `/api/ticket-notes/handoff-requests/me` | List current agent handoff inbox |
 | `/api/ticket-notes/handoff-requests/{handoffRequestId}/respond` | `POST` | `/api/ticket-notes/handoff-requests/{handoffRequestId}/respond` | Accept/reject handoff request |
+| `/api/ticket-messages` | `GET`, `POST` | `/api/ticket-messages` | List/post customer-visible ticket conversation messages (separate from internal notes) |
 
 ## Auth Route Contract
 

@@ -33,4 +33,7 @@ public static class Permissions
     public const string TicketHandoffRequestCreate = "ticket-handoff.request.create";
     public const string TicketHandoffRespond = "ticket-handoff.respond";
     public const string TicketHandoffForceAssign = "ticket-handoff.force-assign";
+
+    public const string TicketMessagesRead = "ticket-messages.read";
+    public const string TicketMessagesWrite = "ticket-messages.write";
 }

@@ -609,6 +609,25 @@
       }
     },
     {
+      "DownstreamPathTemplate": "/api/ticket-messages",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/ticket-messages",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
       "DownstreamPathTemplate": "/api/auth/register",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [

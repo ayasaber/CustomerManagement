@@ -11,6 +11,7 @@ import {
   TicketHandoffRequestResponse,
   TicketInternalNoteResponse
 } from '../../core/models/agent-dashboard.models';
+import { TicketMessageResponse } from '../../core/models/ticket-management.models';
 import { AgentDashboardApiService } from '../../core/services/agent-dashboard-api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TicketManagementApiService } from '../../core/services/ticket-management-api.service';
@@ -18,9 +19,9 @@ import { AssignedTicketsTableComponent } from './components/assigned-tickets-tab
 import { CustomerContextPanelComponent } from './components/customer-context-panel.component';
 import { HandoffInboxPanelComponent } from './components/handoff-inbox-panel.component';
 import { NoteDraftPayload, TicketNotesPanelComponent } from './components/ticket-notes-panel.component';
+import { AgentTicketConversationPanelComponent } from './components/ticket-conversation-panel.component';
 import { CreateTaskDraftPayload, OpenTasksListComponent } from './components/open-tasks-list.component';
 import { QuickReplyAdminPanelComponent } from './components/quick-reply-admin-panel.component';
-import { QuickReplyPickerComponent } from './components/quick-reply-picker.component';
 
 @Component({
   selector: 'app-agent-dashboard-page',
@@ -31,7 +32,7 @@ import { QuickReplyPickerComponent } from './components/quick-reply-picker.compo
     OpenTasksListComponent,
     CustomerContextPanelComponent,
     TicketNotesPanelComponent,
-    QuickReplyPickerComponent,
+    AgentTicketConversationPanelComponent,
     QuickReplyAdminPanelComponent,
     HandoffInboxPanelComponent
   ],
@@ -72,12 +73,19 @@ import { QuickReplyPickerComponent } from './components/quick-reply-picker.compo
             [insertToken]="insertToken()"
             (createNoteClicked)="createNote($event)" />
 
+          <app-agent-ticket-conversation-panel
+            [messages]="ticketMessages()"
+            [quickReplies]="quickReplies()"
+            [canCompose]="canComposeConversation()"
+            [sending]="conversationSending()"
+            [loading]="conversationLoading()"
+            (reloadClicked)="reloadConversation()"
+            (sendClicked)="postConversationMessage($event)" />
+
           <app-handoff-inbox-panel
             [requests]="handoffRequests()"
             (acceptClicked)="respondToHandoff($event, true)"
             (rejectClicked)="respondToHandoff($event, false)" />
-
-          <app-quick-reply-picker [replies]="quickReplies()" (insertClicked)="insertQuickReply($event)" />
 
           <app-quick-reply-admin-panel
             [visible]="canManageQuickReplies()"
@@ -141,8 +149,11 @@ export class AgentDashboardPageComponent implements OnInit {
   readonly notes = signal<TicketInternalNoteResponse[]>([]);
   readonly handoffRequests = signal<TicketHandoffRequestResponse[]>([]);
   readonly customerContext = signal<DashboardCustomerContextResponse | null>(null);
+  readonly ticketMessages = signal<TicketMessageResponse[]>([]);
   readonly selectedTicketId = signal('');
   readonly loading = signal(false);
+  readonly conversationLoading = signal(false);
+  readonly conversationSending = signal(false);
   readonly error = signal('');
   readonly success = signal('');
   readonly insertText = signal('');
@@ -150,6 +161,7 @@ export class AgentDashboardPageComponent implements OnInit {
   readonly agentOptions = signal<AgentOption[]>([]);
 
   readonly canManageQuickReplies = computed(() => this.authService.hasRole('admin'));
+  readonly canComposeConversation = computed(() => this.authService.hasRole('admin') || this.authService.hasRole('agent'));
 
   constructor(
     private readonly dashboardApi: AgentDashboardApiService,
@@ -312,6 +324,43 @@ export class AgentDashboardPageComponent implements OnInit {
     this.success.set('Quick reply inserted into note composer.');
   }
 
+  postConversationMessage(body: string): void {
+    const ticketId = this.selectedTicketId();
+    if (!ticketId) {
+      this.error.set('Select a ticket first.');
+      return;
+    }
+
+    this.conversationSending.set(true);
+    this.ticketApi
+      .createTicketMessage({ ticketId, body })
+      .pipe(finalize(() => this.conversationSending.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.success.set('Conversation message posted.');
+          this.ticketMessages.update((items) => items.concat(response.message));
+        },
+        error: (err: Error) => this.error.set(`Conversation post failed: ${err.message}`)
+      });
+  }
+
+  reloadConversation(): void {
+    const ticketId = this.selectedTicketId();
+    if (!ticketId) {
+      this.ticketMessages.set([]);
+      return;
+    }
+
+    this.conversationLoading.set(true);
+    this.ticketApi
+      .listTicketMessages(ticketId, 1, 50)
+      .pipe(finalize(() => this.conversationLoading.set(false)))
+      .subscribe({
+        next: (response) => this.ticketMessages.set(response.items),
+        error: (err: Error) => this.error.set(`Conversation load failed: ${err.message}`)
+      });
+  }
+
   createQuickReply(payload: { title: string; body: string; tags: string[] }): void {
     this.beginRequest();
     this.dashboardApi
@@ -406,19 +455,22 @@ export class AgentDashboardPageComponent implements OnInit {
     if (!ticketId) {
       this.customerContext.set(null);
       this.notes.set([]);
+      this.ticketMessages.set([]);
       return;
     }
 
     this.beginRequest(false);
     forkJoin({
       context: this.dashboardApi.getTicketCustomerContext(ticketId),
-      notes: this.dashboardApi.listTicketNotes(ticketId)
+      notes: this.dashboardApi.listTicketNotes(ticketId),
+      messages: this.ticketApi.listTicketMessages(ticketId, 1, 50)
     })
       .pipe(finalize(() => this.finishRequest()))
       .subscribe({
         next: (payload) => {
           this.customerContext.set(payload.context);
           this.notes.set(payload.notes.items.slice().reverse());
+          this.ticketMessages.set(payload.messages.items);
           this.mergeAgentOptionsFromNotes(payload.notes.items);
         },
         error: (err: Error) => this.error.set(`Ticket context load failed: ${err.message}`)

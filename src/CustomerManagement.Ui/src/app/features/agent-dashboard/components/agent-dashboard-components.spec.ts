@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AssignedTicketsTableComponent } from './assigned-tickets-table.component';
 import { OpenTasksListComponent } from './open-tasks-list.component';
 import { QuickReplyPickerComponent } from './quick-reply-picker.component';
+import { TicketConversationPanelComponent } from '../../tickets/components/ticket-conversation-panel.component';
 import { TicketNotesPanelComponent } from './ticket-notes-panel.component';
 
 describe('Agent dashboard components', () => {
@@ -112,5 +113,39 @@ describe('Agent dashboard components', () => {
     component.submit();
 
     expect(component.createNoteClicked.emit).toHaveBeenCalled();
+  });
+
+  it('conversation panel helper inserts selected quick reply into compose text', async () => {
+    await TestBed.configureTestingModule({ imports: [TicketConversationPanelComponent] }).compileComponents();
+    const fixture: ComponentFixture<TicketConversationPanelComponent> = TestBed.createComponent(TicketConversationPanelComponent);
+    const component = fixture.componentInstance;
+
+    component.canCompose = true;
+    component.quickReplies = [
+      {
+        id: 'q-1',
+        title: 'Follow-up',
+        body: 'Thank you for your patience.',
+        tags: ['followup'],
+        isActive: true,
+        createdByUserId: 'u-1',
+        updatedByUserId: null,
+        createdAtUtc: '2026-09-02T10:00:00Z',
+        updatedAtUtc: '2026-09-02T10:00:00Z',
+        rowVersion: 'AA=='
+      }
+    ];
+
+    fixture.detectChanges();
+
+    const helperButton = fixture.nativeElement.querySelector('.helper-wrap .secondary') as HTMLButtonElement;
+    helperButton.click();
+    fixture.detectChanges();
+
+    const replyButton = fixture.nativeElement.querySelector('.helper-popup li button') as HTMLButtonElement;
+    replyButton.click();
+    fixture.detectChanges();
+
+    expect(component.draft).toContain('Thank you for your patience.');
   });
 });

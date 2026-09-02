@@ -2,21 +2,26 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { QuickReplyResponse } from '../../core/models/agent-dashboard.models';
 import { CustomerListItemResponse } from '../../core/models/customer-management.models';
 import {
+  CreateTicketMessageResponse,
   TicketCategoryResponse,
   TicketHistoryItemResponse,
   TicketListItemResponse,
+  TicketMessageResponse,
   TicketPriorityResponse
 } from '../../core/models/ticket-management.models';
+import { AgentDashboardApiService } from '../../core/services/agent-dashboard-api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CustomerManagementApiService } from '../../core/services/customer-management-api.service';
 import { TicketManagementApiService } from '../../core/services/ticket-management-api.service';
+import { TicketConversationPanelComponent } from './components/ticket-conversation-panel.component';
 
 @Component({
   selector: 'app-ticket-management-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TicketConversationPanelComponent],
   templateUrl: './ticket-management-page.component.html',
   styleUrl: './ticket-management-page.component.scss'
 })
@@ -32,6 +37,11 @@ export class TicketManagementPageComponent implements OnInit {
   readonly priorities = signal<TicketPriorityResponse[]>([]);
   readonly selectedHistory = signal<TicketHistoryItemResponse[]>([]);
   readonly selectedHistoryTicket = signal<TicketListItemResponse | null>(null);
+  readonly selectedConversationTicket = signal<TicketListItemResponse | null>(null);
+  readonly ticketMessages = signal<TicketMessageResponse[]>([]);
+  readonly quickReplies = signal<QuickReplyResponse[]>([]);
+  readonly conversationLoading = signal(false);
+  readonly conversationSending = signal(false);
 
   readonly loading = signal(false);
   readonly error = signal('');
@@ -39,6 +49,7 @@ export class TicketManagementPageComponent implements OnInit {
   readonly canAssignOthers = computed(() => this.authService.hasRole('admin'));
   readonly canSelfAssign = computed(() => this.authService.hasRole('admin') || this.authService.hasRole('agent'));
   readonly isCustomer = computed(() => this.authService.hasRole('customer'));
+  readonly canComposeConversation = computed(() => this.authService.hasRole('admin') || this.authService.hasRole('agent'));
   readonly statusOptions = [
     { value: 'in_progress', label: 'In Progress' },
     { value: 'waiting_on_customer', label: 'Waiting On Customer' },
@@ -66,12 +77,14 @@ export class TicketManagementPageComponent implements OnInit {
 
   constructor(
     private readonly api: TicketManagementApiService,
-    private readonly customerApi: CustomerManagementApiService
+    private readonly customerApi: CustomerManagementApiService,
+    private readonly dashboardApi: AgentDashboardApiService
   ) {}
 
   ngOnInit(): void {
     this.loadCustomerOptions();
     this.refreshTaxonomy();
+    this.loadQuickRepliesIfAllowed();
     this.loadTickets();
   }
 
@@ -201,6 +214,45 @@ export class TicketManagementPageComponent implements OnInit {
       .subscribe({
         next: (history) => this.selectedHistory.set(history.items),
         error: (err: Error) => this.error.set(`History load failed: ${err.message}`)
+      });
+  }
+
+  loadConversation(ticketId: string): void {
+    const selectedTicket = this.tickets().find((row) => row.id === ticketId) ?? null;
+    this.selectedConversationTicket.set(selectedTicket);
+
+    if (!selectedTicket) {
+      this.ticketMessages.set([]);
+      return;
+    }
+
+    this.conversationLoading.set(true);
+    this.api
+      .listTicketMessages(selectedTicket.id, 1, 50)
+      .pipe(finalize(() => this.conversationLoading.set(false)))
+      .subscribe({
+        next: (response) => this.ticketMessages.set(response.items),
+        error: (err: Error) => this.error.set(`Conversation load failed: ${err.message}`)
+      });
+  }
+
+  postConversationMessage(body: string): void {
+    const selectedTicket = this.selectedConversationTicket();
+    if (!selectedTicket) {
+      this.error.set('Select a ticket before posting a conversation message.');
+      return;
+    }
+
+    this.conversationSending.set(true);
+    this.api
+      .createTicketMessage({ ticketId: selectedTicket.id, body })
+      .pipe(finalize(() => this.conversationSending.set(false)))
+      .subscribe({
+        next: (response: CreateTicketMessageResponse) => {
+          this.success.set('Conversation message posted.');
+          this.ticketMessages.update((items) => items.concat(response.message));
+        },
+        error: (err: Error) => this.error.set(`Conversation post failed: ${err.message}`)
       });
   }
 
@@ -357,6 +409,18 @@ export class TicketManagementPageComponent implements OnInit {
     this.api.listPriorities(true).subscribe({
       next: (priorities) => this.priorities.set(priorities),
       error: (err: Error) => this.error.set(`Priority load failed: ${err.message}`)
+    });
+  }
+
+  private loadQuickRepliesIfAllowed(): void {
+    if (!this.canComposeConversation()) {
+      this.quickReplies.set([]);
+      return;
+    }
+
+    this.dashboardApi.listQuickReplies(true).subscribe({
+      next: (response) => this.quickReplies.set(response.items),
+      error: () => this.quickReplies.set([])
     });
   }
 

@@ -125,6 +125,33 @@ export interface TicketHistoryResponse {
   items: TicketHistoryItemResponse[];
 }
 
+export interface TicketMessageResponse {
+  id: string;
+  ticketId: string;
+  senderType: string;
+  senderUserId: string;
+  senderDisplayName: string;
+  body: string;
+  createdAtUtc: string;
+  rowVersion: number[];
+}
+
+export interface TicketMessageListResponse {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  items: TicketMessageResponse[];
+}
+
+export interface CreateTicketMessageRequest {
+  ticketId: string;
+  body: string;
+}
+
+export interface CreateTicketMessageResponse {
+  message: TicketMessageResponse;
+}
+
 export interface ApiValidationError {
   title?: string;
   errors?: Record<string, string[]>;

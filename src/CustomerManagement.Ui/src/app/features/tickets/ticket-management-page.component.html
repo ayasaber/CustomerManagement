@@ -106,6 +106,7 @@
           <th>Priority</th>
           <th>Escalated</th>
           <th>History</th>
+          <th>Conversation</th>
         </tr>
       </thead>
       <tbody>
@@ -117,6 +118,7 @@
           <td>{{ ticket.priorityName }}</td>
           <td>{{ ticket.isEscalated ? 'Yes' : 'No' }}</td>
           <td><button type="button" (click)="loadHistory(ticket.id)">Load</button></td>
+          <td><button type="button" (click)="loadConversation(ticket.id)">Open</button></td>
         </tr>
       </tbody>
     </table>
@@ -139,4 +141,14 @@
       </li>
     </ul>
   </section>
+
+  <app-ticket-conversation-panel
+    *ngIf="selectedConversationTicket()"
+    [messages]="ticketMessages()"
+    [quickReplies]="quickReplies()"
+    [canCompose]="canComposeConversation()"
+    [sending]="conversationSending()"
+    [loading]="conversationLoading()"
+    (reloadClicked)="loadConversation(selectedConversationTicket()!.id)"
+    (sendClicked)="postConversationMessage($event)" />
 </section>

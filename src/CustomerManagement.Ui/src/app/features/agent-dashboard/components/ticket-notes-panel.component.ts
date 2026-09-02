@@ -19,7 +19,7 @@ export interface NoteDraftPayload {
   imports: [CommonModule, ReactiveFormsModule],
   template: `
     <section class="panel">
-      <h3>Internal Notes & Mentions</h3>
+      <h3>Internal Notes & Mentions (Agent-only)</h3>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="compose">
         <textarea formControlName="body" rows="4" placeholder="Write an internal note"></textarea>

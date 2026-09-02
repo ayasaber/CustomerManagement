@@ -20,7 +20,7 @@ public sealed class GatewayRouteContractTests
             })
             .ToList();
 
-        Assert.Equal(36, routes.Count);
+        Assert.Equal(37, routes.Count);
 
         var customerRoutes = routes
             .Where(route => route.UpstreamPathTemplate.StartsWith("/api/customers", StringComparison.OrdinalIgnoreCase))
@@ -51,6 +51,11 @@ public sealed class GatewayRouteContractTests
             .Where(route => route.UpstreamPathTemplate.StartsWith("/api/ticket-notes", StringComparison.OrdinalIgnoreCase))
             .ToList();
         Assert.Equal(4, ticketNoteRoutes.Count);
+
+        var ticketMessageRoutes = routes
+            .Where(route => route.UpstreamPathTemplate.StartsWith("/api/ticket-messages", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Single(ticketMessageRoutes);
 
         var duplicates = routes
             .SelectMany(route => route.Methods.Select(method => $"{method}:{route.UpstreamPathTemplate}"))
@@ -97,6 +102,8 @@ public sealed class GatewayRouteContractTests
         Assert.Contains(ticketNoteRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-notes/{noteId}/handoff-requests", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
         Assert.Contains(ticketNoteRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-notes/handoff-requests/me", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
         Assert.Contains(ticketNoteRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-notes/handoff-requests/{handoffRequestId}/respond", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
+
+        Assert.Contains(ticketMessageRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-messages", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "POST"]));
 
         Assert.Contains(routes, route => route.UpstreamPathTemplate.Equals("/api/auth/register", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
         Assert.Contains(routes, route => route.UpstreamPathTemplate.Equals("/api/auth/login", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));

@@ -4,6 +4,8 @@ import { Observable, catchError, throwError } from 'rxjs';
 import {
   AssignTicketRequest,
   ApiValidationError,
+  CreateTicketMessageRequest,
+  CreateTicketMessageResponse,
   CreateTicketCategoryRequest,
   CreateTicketPriorityRequest,
   CreateTicketRequest,
@@ -11,6 +13,7 @@ import {
   TicketCategoryResponse,
   TicketHistoryResponse,
   TicketListResponse,
+  TicketMessageListResponse,
   TicketPriorityResponse,
   TicketResponse,
   UpdateTicketCategoryRequest,
@@ -22,6 +25,7 @@ import { AuthService } from './auth.service';
 @Injectable({ providedIn: 'root' })
 export class TicketManagementApiService {
   private readonly baseUrl = 'http://localhost:5101/api/tickets';
+  private readonly ticketMessagesUrl = 'http://localhost:5101/api/ticket-messages';
 
   constructor(
     private readonly http: HttpClient,
@@ -131,6 +135,23 @@ export class TicketManagementApiService {
     return this.authService
       .withAutoRefresh(() =>
         this.http.get<TicketHistoryResponse>(`${this.baseUrl}/${ticketId}/history`, { headers: this.buildHeaders() })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  listTicketMessages(ticketId: string, page = 1, pageSize = 20): Observable<TicketMessageListResponse> {
+    const params = new HttpParams().set('ticketId', ticketId).set('page', page).set('pageSize', pageSize);
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.get<TicketMessageListResponse>(this.ticketMessagesUrl, { headers: this.buildHeaders(), params })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  createTicketMessage(request: CreateTicketMessageRequest): Observable<CreateTicketMessageResponse> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.post<CreateTicketMessageResponse>(this.ticketMessagesUrl, request, { headers: this.buildHeaders() })
       )
       .pipe(catchError((error) => this.mapError(error)));
   }

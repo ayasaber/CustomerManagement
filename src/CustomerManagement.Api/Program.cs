@@ -109,6 +109,7 @@ app.MapCustomerInteractionHistoryEndpoints();
 app.MapTicketCategoryEndpoints();
 app.MapTicketPriorityEndpoints();
 app.MapTicketEndpoints();
+app.MapTicketMessagesEndpoints();
 app.MapAgentDashboardEndpoints();
 app.MapTicketTasksEndpoints();
 app.MapTicketNotesEndpoints();

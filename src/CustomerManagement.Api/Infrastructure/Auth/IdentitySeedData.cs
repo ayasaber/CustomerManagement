@@ -105,7 +105,9 @@ public static class IdentitySeedData
             [Permissions.TicketMentionsNotify] = "Create ticket mention notifications.",
             [Permissions.TicketHandoffRequestCreate] = "Create ticket handoff requests.",
             [Permissions.TicketHandoffRespond] = "Respond to ticket handoff requests.",
-            [Permissions.TicketHandoffForceAssign] = "Force assign tickets via handoff override."
+            [Permissions.TicketHandoffForceAssign] = "Force assign tickets via handoff override.",
+            [Permissions.TicketMessagesRead] = "Read customer-visible ticket conversation messages.",
+            [Permissions.TicketMessagesWrite] = "Post customer-visible ticket conversation messages."
         };
 
         var existingPermissions = await dbContext.Permissions
@@ -168,7 +170,9 @@ public static class IdentitySeedData
                 Permissions.TicketMentionsNotify,
                 Permissions.TicketHandoffRequestCreate,
                 Permissions.TicketHandoffRespond,
-                Permissions.TicketHandoffForceAssign
+                Permissions.TicketHandoffForceAssign,
+                Permissions.TicketMessagesRead,
+                Permissions.TicketMessagesWrite
             ],
             [AuthRoles.Agent] =
             [
@@ -189,13 +193,16 @@ public static class IdentitySeedData
                 Permissions.TicketInternalNotesWrite,
                 Permissions.TicketMentionsNotify,
                 Permissions.TicketHandoffRequestCreate,
-                Permissions.TicketHandoffRespond
+                Permissions.TicketHandoffRespond,
+                Permissions.TicketMessagesRead,
+                Permissions.TicketMessagesWrite
             ],
             [AuthRoles.Customer] =
             [
                 Permissions.TicketsRead,
                 Permissions.TicketsWrite,
-                Permissions.TicketsClose
+                Permissions.TicketsClose,
+                Permissions.TicketMessagesRead
             ]
         };
 

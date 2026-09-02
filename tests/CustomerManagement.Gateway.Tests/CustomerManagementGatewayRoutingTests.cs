@@ -112,6 +112,8 @@ public sealed class CustomerManagementGatewayRoutingTests : IAsyncLifetime
     [InlineData("POST", "/api/ticket-notes/11111111-1111-1111-1111-111111111111/handoff-requests")]
     [InlineData("GET", "/api/ticket-notes/handoff-requests/me")]
     [InlineData("POST", "/api/ticket-notes/handoff-requests/11111111-1111-1111-1111-111111111111/respond")]
+    [InlineData("GET", "/api/ticket-messages?ticketId=11111111-1111-1111-1111-111111111111&page=1&pageSize=20")]
+    [InlineData("POST", "/api/ticket-messages")]
     public async Task Gateway_RoutesAgentDashboardRequests_ToDownstream(string method, string pathAndQuery)
     {
         using var request = NewAuthorizedRequest(
@@ -130,7 +132,8 @@ public sealed class CustomerManagementGatewayRoutingTests : IAsyncLifetime
                 "ticket-notes.read",
                 "ticket-notes.write",
                 "ticket-handoff.request.create",
-                "ticket-handoff.respond"
+                "ticket-handoff.respond",
+                "ticket-messages.read"
             ]);
 
         var response = await _gatewayClient.SendAsync(request);

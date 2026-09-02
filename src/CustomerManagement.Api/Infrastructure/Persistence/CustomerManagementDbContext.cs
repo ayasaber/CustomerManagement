@@ -49,6 +49,8 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
 
     public DbSet<TicketHandoffRequest> TicketHandoffRequests => Set<TicketHandoffRequest>();
 
+    public DbSet<TicketMessage> TicketMessages => Set<TicketMessage>();
+
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -638,6 +640,38 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
 
             entity.HasIndex(request => new { request.TargetAssigneeUserId, request.Status, request.RequestedAtUtc });
             entity.HasIndex(request => new { request.TicketId, request.RequestedAtUtc });
+        });
+
+        modelBuilder.Entity<TicketMessage>(entity =>
+        {
+            entity.ToTable("TicketMessages");
+            entity.HasKey(message => message.Id);
+            entity.Property(message => message.SenderType)
+                .HasConversion<int>()
+                .IsRequired();
+            entity.Property(message => message.SenderDisplayName)
+                .HasMaxLength(200)
+                .IsRequired();
+            entity.Property(message => message.Body)
+                .HasMaxLength(4000)
+                .IsRequired();
+            entity.Property(message => message.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(message => message.RowVersion)
+                .IsRowVersion();
+
+            entity.HasOne(message => message.Ticket)
+                .WithMany()
+                .HasForeignKey(message => message.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(message => message.SenderUser)
+                .WithMany()
+                .HasForeignKey(message => message.SenderUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(message => new { message.TicketId, message.CreatedAtUtc, message.Id });
+            entity.HasIndex(message => new { message.SenderUserId, message.CreatedAtUtc });
         });
 
         modelBuilder.Entity<UserNotification>(entity =>
