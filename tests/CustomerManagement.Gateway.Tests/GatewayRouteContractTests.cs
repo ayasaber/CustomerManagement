@@ -7,7 +7,7 @@ public sealed class GatewayRouteContractTests
     [Fact]
     public async Task OcelotRouteTable_ContainsAllCustomerManagementRoutes_WithoutConflicts()
     {
-        var ocelotPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../src/CustomerManagement.Gateway/ocelot.json"));
+        var ocelotPath = ResolveOcelotPath();
         await using var stream = File.OpenRead(ocelotPath);
         using var json = await JsonDocument.ParseAsync(stream);
 
@@ -20,7 +20,7 @@ public sealed class GatewayRouteContractTests
             })
             .ToList();
 
-        Assert.Equal(23, routes.Count);
+        Assert.Equal(36, routes.Count);
 
         var customerRoutes = routes
             .Where(route => route.UpstreamPathTemplate.StartsWith("/api/customers", StringComparison.OrdinalIgnoreCase))
@@ -32,6 +32,26 @@ public sealed class GatewayRouteContractTests
             .ToList();
         Assert.Equal(12, ticketRoutes.Count);
 
+        var dashboardRoutes = routes
+            .Where(route => route.UpstreamPathTemplate.StartsWith("/api/dashboard", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Equal(4, dashboardRoutes.Count);
+
+        var ticketTaskRoutes = routes
+            .Where(route => route.UpstreamPathTemplate.StartsWith("/api/ticket-tasks", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Equal(3, ticketTaskRoutes.Count);
+
+        var quickReplyRoutes = routes
+            .Where(route => route.UpstreamPathTemplate.StartsWith("/api/quick-replies", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Equal(2, quickReplyRoutes.Count);
+
+        var ticketNoteRoutes = routes
+            .Where(route => route.UpstreamPathTemplate.StartsWith("/api/ticket-notes", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Equal(4, ticketNoteRoutes.Count);
+
         var duplicates = routes
             .SelectMany(route => route.Methods.Select(method => $"{method}:{route.UpstreamPathTemplate}"))
             .GroupBy(key => key, StringComparer.OrdinalIgnoreCase)
@@ -40,7 +60,7 @@ public sealed class GatewayRouteContractTests
 
         Assert.Empty(duplicates);
 
-        Assert.Contains(customerRoutes, route => route.UpstreamPathTemplate.Equals("/api/customers", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
+        Assert.Contains(customerRoutes, route => route.UpstreamPathTemplate.Equals("/api/customers", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "POST"]));
         Assert.Contains(customerRoutes, route => route.UpstreamPathTemplate.Equals("/api/customers/{customerId}", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "PUT"]));
         Assert.Contains(customerRoutes, route => route.UpstreamPathTemplate.Equals("/api/customers/{customerId}/contact-details", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
         Assert.Contains(customerRoutes, route => route.UpstreamPathTemplate.Equals("/api/customers/{customerId}/notes", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "POST"]));
@@ -61,9 +81,43 @@ public sealed class GatewayRouteContractTests
         Assert.Contains(ticketRoutes, route => route.UpstreamPathTemplate.Equals("/api/tickets/{ticketId}/reopen", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
         Assert.Contains(ticketRoutes, route => route.UpstreamPathTemplate.Equals("/api/tickets/{ticketId}/history", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
 
+        Assert.Contains(dashboardRoutes, route => route.UpstreamPathTemplate.Equals("/api/dashboard/me/assigned-tickets", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
+        Assert.Contains(dashboardRoutes, route => route.UpstreamPathTemplate.Equals("/api/dashboard/me/open-tasks", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
+        Assert.Contains(dashboardRoutes, route => route.UpstreamPathTemplate.Equals("/api/dashboard/tickets/{ticketId}/customer-context", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
+        Assert.Contains(dashboardRoutes, route => route.UpstreamPathTemplate.Equals("/api/dashboard/agents", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
+
+        Assert.Contains(ticketTaskRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-tasks", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "POST"]));
+        Assert.Contains(ticketTaskRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-tasks/{taskId}", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["PUT"]));
+        Assert.Contains(ticketTaskRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-tasks/{taskId}/complete", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["PUT"]));
+
+        Assert.Contains(quickReplyRoutes, route => route.UpstreamPathTemplate.Equals("/api/quick-replies", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "POST"]));
+        Assert.Contains(quickReplyRoutes, route => route.UpstreamPathTemplate.Equals("/api/quick-replies/{quickReplyId}", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["PUT"]));
+
+        Assert.Contains(ticketNoteRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-notes", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "POST"]));
+        Assert.Contains(ticketNoteRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-notes/{noteId}/handoff-requests", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
+        Assert.Contains(ticketNoteRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-notes/handoff-requests/me", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
+        Assert.Contains(ticketNoteRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-notes/handoff-requests/{handoffRequestId}/respond", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
+
         Assert.Contains(routes, route => route.UpstreamPathTemplate.Equals("/api/auth/register", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
         Assert.Contains(routes, route => route.UpstreamPathTemplate.Equals("/api/auth/login", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
         Assert.Contains(routes, route => route.UpstreamPathTemplate.Equals("/api/auth/refresh", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
         Assert.Contains(routes, route => route.UpstreamPathTemplate.Equals("/api/auth/logout", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
+    }
+
+    private static string ResolveOcelotPath()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            var candidate = Path.Combine(directory.FullName, "src", "CustomerManagement.Gateway", "ocelot.json");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new DirectoryNotFoundException("Unable to locate src/CustomerManagement.Gateway/ocelot.json from test output directory.");
     }
 }

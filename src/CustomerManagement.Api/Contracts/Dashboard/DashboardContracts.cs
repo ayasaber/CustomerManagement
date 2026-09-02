@@ -43,3 +43,12 @@ public sealed record DashboardCustomerInteractionItemResponse(
     string Type,
     string Summary,
     DateTime OccurredAtUtc);
+
+public sealed record DashboardAgentDirectoryItemResponse(
+    Guid UserId,
+    string DisplayName,
+    string Email);
+
+public sealed record DashboardAgentDirectoryResponse(
+    int TotalCount,
+    IReadOnlyList<DashboardAgentDirectoryItemResponse> Items);

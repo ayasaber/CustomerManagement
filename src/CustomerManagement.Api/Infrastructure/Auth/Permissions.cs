@@ -26,4 +26,11 @@ public static class Permissions
 
     public const string QuickRepliesRead = "quick-replies.read";
     public const string QuickRepliesManage = "quick-replies.manage";
+
+    public const string TicketInternalNotesRead = "ticket-notes.read";
+    public const string TicketInternalNotesWrite = "ticket-notes.write";
+    public const string TicketMentionsNotify = "ticket-mentions.notify";
+    public const string TicketHandoffRequestCreate = "ticket-handoff.request.create";
+    public const string TicketHandoffRespond = "ticket-handoff.respond";
+    public const string TicketHandoffForceAssign = "ticket-handoff.force-assign";
 }

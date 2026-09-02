@@ -36,6 +36,7 @@ Add upstream routes mapped to API service:
 - `GET /api/dashboard/me/assigned-tickets`
 - `GET /api/dashboard/me/open-tasks`
 - `GET /api/dashboard/tickets/{ticketId}/customer-context`
+- `GET /api/dashboard/agents`
 - `GET /api/ticket-tasks`
 - `POST /api/ticket-tasks`
 - `PUT /api/ticket-tasks/{taskId}`
@@ -90,6 +91,7 @@ Page layout sections:
 - Right column:
   - Selected ticket customer context.
   - Internal notes and mentions panel.
+  - My handoff inbox panel (for current agent) with accept/reject actions.
   - Quick-reply picker panel.
 
 ### 2. Add dashboard API service
@@ -101,6 +103,7 @@ Methods:
 - `getAssignedTickets(params)`
 - `getOpenTasks(params)`
 - `getTicketCustomerContext(ticketId)`
+- `getAssignableAgents()` (dashboard-safe agent directory source for mentions/handoff)
 - `listTicketNotes(ticketId, page, pageSize)`
 - `createTicketNote(request)`
 - `createHandoffRequest(noteId, request)`
@@ -132,6 +135,7 @@ Create components under `src/CustomerManagement.Ui/src/app/features/agent-dashbo
 - `ticket-notes-panel.component`
   - Thread list (newest first), compose box, mention multi-select (agent users only).
   - Post action supports optional "Mention and offer handoff" checkbox.
+  - Post action must stay clickable; validation errors must be inline and explicit (no permanently disabled state from stale control errors).
 
 - `quick-reply-picker.component`
   - Search input, tag chips, list of active replies (title + preview).
@@ -150,9 +154,13 @@ Create components under `src/CustomerManagement.Ui/src/app/features/agent-dashbo
 - Ticket selection change reloads only ticket-scoped panels, not full page.
 - Mention flow:
   - Posting note with mentions shows per-user delivery indicator from API response.
+  - Mention list excludes current user; self mention must be blocked in UI and API.
   - Triggering agent can open handoff modal only when user selected "offer handoff" and has handoff-request permission.
+  - Handoff target must be teammate and must be selected in mention list before submit.
   - Target assignee sees pending handoff inbox panel with `Accept` and `Reject` actions.
   - Accept assigns ticket to target assignee; Reject leaves assignment unchanged.
+  - Handoff request/response outcomes must be visible through ticket history timeline endpoint data.
+  - UI must refresh assigned tickets and handoff inbox immediately after accept/reject response.
 - Errors:
   - `409` shows conflict banner with reload CTA.
   - `403` shows permission message; hides blocked actions.
@@ -171,6 +179,7 @@ Create components under `src/CustomerManagement.Ui/src/app/features/agent-dashbo
 - Quick replies empty: show informational empty state, not error banner.
 - Mention delivery false for one recipient: show non-blocking warning and keep note persisted.
 - Handoff request responded by someone else first: surface conflict toast and reload request list.
+- Agent directory source cannot rely on admin-only users API; dashboard must call `/api/dashboard/agents` for mention/handoff options.
 
 ---
 
@@ -184,6 +193,7 @@ Create components under `src/CustomerManagement.Ui/src/app/features/agent-dashbo
   - notes mention compose validation.
 3. Add route guard test for `/agent/dashboard`.
 4. Add gateway route tests for all dashboard/task/reply/note routes.
+5. Add/extend notes panel tests to ensure submit button does not remain disabled due to handoff target validation state.
 
 ---
 
@@ -201,5 +211,8 @@ Create components under `src/CustomerManagement.Ui/src/app/features/agent-dashbo
 - [x] Gateway exposes documented and tested routes for all agent-dashboard APIs.
 - [x] Angular route `/agent/dashboard` and component shell are implemented.
 - [x] Assigned tickets, open tasks, customer context, notes/mentions, and quick replies are integrated.
+- [x] Agent can see and act on "my handoff requests" list from Story 17 in the dashboard UI.
 - [x] Admin-only quick-reply management appears conditionally.
 - [x] UI and route/service tests cover critical interactions.
+- [x] Mention/handoff selector uses dashboard-safe agent directory route, not admin-only user listing.
+- [x] Notes composer avoids sticky disabled submit states and surfaces inline validation.

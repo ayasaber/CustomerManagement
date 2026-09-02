@@ -95,6 +95,54 @@ public sealed class CustomerManagementGatewayRoutingTests : IAsyncLifetime
         }
     }
 
+    [Theory]
+    [InlineData("GET", "/api/dashboard/me/assigned-tickets?page=1&pageSize=20")]
+    [InlineData("GET", "/api/dashboard/me/open-tasks?page=1&pageSize=20")]
+    [InlineData("GET", "/api/dashboard/tickets/11111111-1111-1111-1111-111111111111/customer-context")]
+    [InlineData("GET", "/api/dashboard/agents")]
+    [InlineData("GET", "/api/ticket-tasks?assignedToMeOnly=true")]
+    [InlineData("POST", "/api/ticket-tasks")]
+    [InlineData("PUT", "/api/ticket-tasks/11111111-1111-1111-1111-111111111111")]
+    [InlineData("PUT", "/api/ticket-tasks/11111111-1111-1111-1111-111111111111/complete")]
+    [InlineData("GET", "/api/quick-replies?activeOnly=true")]
+    [InlineData("POST", "/api/quick-replies")]
+    [InlineData("PUT", "/api/quick-replies/11111111-1111-1111-1111-111111111111")]
+    [InlineData("GET", "/api/ticket-notes?ticketId=11111111-1111-1111-1111-111111111111")]
+    [InlineData("POST", "/api/ticket-notes")]
+    [InlineData("POST", "/api/ticket-notes/11111111-1111-1111-1111-111111111111/handoff-requests")]
+    [InlineData("GET", "/api/ticket-notes/handoff-requests/me")]
+    [InlineData("POST", "/api/ticket-notes/handoff-requests/11111111-1111-1111-1111-111111111111/respond")]
+    public async Task Gateway_RoutesAgentDashboardRequests_ToDownstream(string method, string pathAndQuery)
+    {
+        using var request = NewAuthorizedRequest(
+            new HttpMethod(method),
+            pathAndQuery,
+            new { sample = "payload" },
+            permissions:
+            [
+                "dashboard.read",
+                "dashboard.customer-context.read",
+                "ticket-tasks.read",
+                "ticket-tasks.write",
+                "ticket-tasks.complete",
+                "quick-replies.read",
+                "quick-replies.manage",
+                "ticket-notes.read",
+                "ticket-notes.write",
+                "ticket-handoff.request.create",
+                "ticket-handoff.respond"
+            ]);
+
+        var response = await _gatewayClient.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<GatewayEchoResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal(method, payload!.Method, ignoreCase: true);
+        Assert.Equal(payload.UserId, payload.ForwardedUserId);
+        Assert.Equal(payload.Email, payload.ForwardedEmail);
+    }
+
     [Fact]
     public async Task Gateway_ForwardsIdentityHeaders_FromJwtClaims()
     {

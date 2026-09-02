@@ -145,6 +145,7 @@ Route group: `/api/ticket-notes`
   - Validations:
     - Ticket exists and caller can view ticket.
     - Mention targets must exist and have agent role.
+    - Caller cannot mention self.
     - Mention list distinct max `10` users.
     - `OfferReassign=true` requires `ReassignToUserId` present and included in mentions.
   - Behavior:
@@ -156,14 +157,16 @@ Route group: `/api/ticket-notes`
 
 - `POST /api/ticket-notes/{noteId:guid}/handoff-requests`
   - Permission: `ticket-handoff.request.create`.
-  - Creates a pending handoff request for a mentioned agent.
+  - Creates a pending handoff request for an eligible teammate agent.
   - Preconditions:
     - Note exists.
     - Note belongs to ticket.
-    - `TargetAssigneeUserId` exists, is active, has agent role, and is present in note mentions.
+    - `TargetAssigneeUserId` exists, is active, has agent role.
+    - `TargetAssigneeUserId` is not the requester.
   - Behavior:
     - Persist `Pending` handoff request.
     - Create in-app notification for target assignee (`Type = "ticket_handoff_request"`).
+    - Write ticket history entry (`ActionType = "ticket.handoff.requested"`) with target assignee transition context.
     - Does not change ticket assignee.
   - Responses: `201`, `400`, `401`, `403`, `404`, `409`.
 
@@ -182,6 +185,8 @@ Route group: `/api/ticket-notes`
   - Behavior:
     - If `Accept=true`: set status `Accepted`, assign ticket to target assignee using same assignment rules/path, record response metadata.
     - If `Accept=false`: set status `Rejected`, keep current assignee unchanged, record response metadata.
+    - Always write ticket history entry (`ActionType = "ticket.handoff.responded"`) with `Pending -> Accepted/Rejected` status change.
+    - On accept, also write assignment history entry (`ActionType = "ticket.assigned"`, `assignedToUserId` old/new).
   - Responses:
     - `200` with `TicketHandoffRequestResponse` and updated ticket summary for accepted case.
     - `400` invalid state transition.
@@ -189,17 +194,27 @@ Route group: `/api/ticket-notes`
     - `404` request or ticket not found.
     - `409` stale rowversion or non-pending request conflict.
 
-### 5. Explicit mention notification mechanism (assumption)
+### 5. Explicit mention and handoff notification persistence (required)
 
-Assumption for this feature sequence:
+This story MUST persist in-app notifications as part of completion scope.
 
-- Notification channel is **in-app only**.
-- For each mention, write a `UserNotification` row (or reuse existing notification table if present) with:
-  - `Type = "ticket_mention"`
-  - `RecipientUserId`
-  - `PayloadJson` containing `TicketId`, `TicketNumber`, `NoteId`, `AuthorDisplayName`.
-  - `CreatedAtUtc`, `ReadAtUtc` nullable.
-- Email notifications are deferred and out of scope.
+- Create and map `UserNotification` entity/table with fields:
+  - `Guid Id`
+  - `string Type`
+  - `Guid RecipientUserId`
+  - `string PayloadJson`
+  - `DateTime CreatedAtUtc`
+  - `DateTime? ReadAtUtc`
+- Register `DbSet<UserNotification>` in `CustomerManagementDbContext`.
+- For each note mention, create one notification row with:
+  - `Type = "ticket-note-mention"`
+  - `RecipientUserId = mentioned user`
+  - `PayloadJson` containing at minimum: `ticketId`, `noteId`, `mentionedByUserId`, `mentionedUserId`, `createdAtUtc`.
+- For each handoff request creation, create one notification row with:
+  - `Type = "ticket-handoff-request"`
+  - `RecipientUserId = target assignee`
+  - `PayloadJson` containing at minimum: `handoffRequestId`, `ticketId`, `noteId`, `requestedByUserId`, `targetAssigneeUserId`, `createdAtUtc`.
+- Notification channel remains in-app only for this story; email/push are out of scope.
 
 ### 6. Explicit handoff behavior split
 
@@ -217,6 +232,7 @@ Assumption for this feature sequence:
 - Note body includes `@text` that does not map to explicit `MentionedUserIds`: keep plain text, no implicit mention creation.
 - Target assignee rejects handoff after note creation: ticket remains with current assignee and request status is `Rejected`.
 - Two responders race on same request: first valid response wins; second gets `409` non-pending conflict.
+- Handoff requested/replied actions missing from ticket timeline: considered implementation bug; Story 17 requires persistent history entries for request + response (+ assignment on accept).
 
 ---
 
@@ -230,6 +246,7 @@ Assumption for this feature sequence:
 6. Verify target agent can accept and gets assignment applied.
 7. Verify target agent can reject and assignment remains unchanged.
 8. Verify admin force-assign override path.
+9. Verify ticket history entries are written for handoff request, response, and assignment on accept.
 
 ---
 
@@ -243,7 +260,9 @@ Assumption for this feature sequence:
 ## Done Criteria
 
 - [x] Internal notes are persisted and scoped to agent/admin visibility only.
-- [x] Mentions are explicit by user id and generate in-app notifications.
+- [x] Mentions are explicit by user id and generate persisted in-app notification records.
 - [x] Reassignment remains explicit, never automatic from mention creation or handoff request creation.
 - [x] Handoff supports target-agent accept/reject with deterministic status transitions.
+- [x] Handoff request creation generates persisted in-app notification records for the target assignee.
 - [x] Tests verify separation between mention, handoff request, and assignment side effects.
+- [x] Handoff lifecycle is auditable through `TicketHistoryEntries` with request/respond/assignment records.

@@ -30,6 +30,11 @@ public static class AgentDashboardEndpoints
             .WithName("GetDashboardTicketCustomerContext")
             .WithSummary("Get customer context for a dashboard ticket");
 
+        group.MapGet("/agents", GetAssignableAgentsAsync)
+            .RequireAuthorization("Permission:" + Permissions.TicketInternalNotesWrite)
+            .WithName("GetDashboardAssignableAgents")
+            .WithSummary("Get assignable agents for mentions and handoff targets");
+
         return app;
     }
 
@@ -280,6 +285,39 @@ public static class AgentDashboardEndpoints
             interactions);
 
         return Results.Ok(response);
+    }
+
+    private static async Task<IResult> GetAssignableAgentsAsync(
+        HttpContext httpContext,
+        CustomerManagementDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var actorUserId = ResolveActorUserId(httpContext.User);
+        if (!actorUserId.HasValue)
+        {
+            return Results.Forbid();
+        }
+
+        var query =
+            from user in dbContext.Users.AsNoTracking()
+            join userRole in dbContext.UserRoles.AsNoTracking() on user.Id equals userRole.UserId
+            join role in dbContext.Roles.AsNoTracking() on userRole.RoleId equals role.Id
+            where user.IsActive && role.Name == AuthRoles.Agent
+            select user;
+
+        query = query.Where(user => user.Id != actorUserId.Value);
+
+        var users = await query
+            .Distinct()
+            .OrderBy(user => user.DisplayName)
+            .ThenBy(user => user.Email)
+            .Select(user => new DashboardAgentDirectoryItemResponse(
+                user.Id,
+                string.IsNullOrWhiteSpace(user.DisplayName) ? (user.Email ?? user.UserName ?? user.Id.ToString()) : user.DisplayName,
+                user.Email ?? user.UserName ?? string.Empty))
+            .ToListAsync(cancellationToken);
+
+        return Results.Ok(new DashboardAgentDirectoryResponse(users.Count, users));
     }
 
     private static string FormatTicketNumber(Guid ticketId)

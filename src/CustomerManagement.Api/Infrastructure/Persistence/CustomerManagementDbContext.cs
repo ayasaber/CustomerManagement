@@ -43,6 +43,14 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
 
     public DbSet<QuickReply> QuickReplies => Set<QuickReply>();
 
+    public DbSet<TicketInternalNote> TicketInternalNotes => Set<TicketInternalNote>();
+
+    public DbSet<TicketInternalNoteMention> TicketInternalNoteMentions => Set<TicketInternalNoteMention>();
+
+    public DbSet<TicketHandoffRequest> TicketHandoffRequests => Set<TicketHandoffRequest>();
+
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -539,6 +547,120 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
             entity.HasIndex(reply => reply.Title)
                 .IsUnique();
             entity.HasIndex(reply => new { reply.IsActive, reply.Title });
+        });
+
+        modelBuilder.Entity<TicketInternalNote>(entity =>
+        {
+            entity.ToTable("TicketInternalNotes");
+            entity.HasKey(note => note.Id);
+            entity.Property(note => note.Body)
+                .HasMaxLength(4000)
+                .IsRequired();
+            entity.Property(note => note.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(note => note.UpdatedAtUtc)
+                .IsRequired();
+            entity.Property(note => note.RowVersion)
+                .IsRowVersion();
+
+            entity.HasOne(note => note.Ticket)
+                .WithMany()
+                .HasForeignKey(note => note.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(note => note.AuthorUser)
+                .WithMany()
+                .HasForeignKey(note => note.AuthorUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(note => new { note.TicketId, note.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<TicketInternalNoteMention>(entity =>
+        {
+            entity.ToTable("TicketInternalNoteMentions");
+            entity.HasKey(mention => mention.Id);
+            entity.Property(mention => mention.MentionedAtUtc)
+                .IsRequired();
+            entity.Property(mention => mention.NotificationDelivered)
+                .IsRequired();
+            entity.Property(mention => mention.NotificationDeliveredAtUtc);
+
+            entity.HasOne(mention => mention.TicketInternalNote)
+                .WithMany(note => note.Mentions)
+                .HasForeignKey(mention => mention.TicketInternalNoteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(mention => mention.MentionedUser)
+                .WithMany()
+                .HasForeignKey(mention => mention.MentionedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(mention => new { mention.TicketInternalNoteId, mention.MentionedUserId })
+                .IsUnique();
+            entity.HasIndex(mention => new { mention.MentionedUserId, mention.MentionedAtUtc });
+        });
+
+        modelBuilder.Entity<TicketHandoffRequest>(entity =>
+        {
+            entity.ToTable("TicketHandoffRequests");
+            entity.HasKey(request => request.Id);
+            entity.Property(request => request.Status)
+                .HasConversion<int>()
+                .IsRequired();
+            entity.Property(request => request.Message)
+                .HasMaxLength(1000);
+            entity.Property(request => request.ResponseMessage)
+                .HasMaxLength(1000);
+            entity.Property(request => request.RequestedAtUtc)
+                .IsRequired();
+            entity.Property(request => request.RespondedAtUtc);
+
+            entity.HasOne(request => request.Ticket)
+                .WithMany()
+                .HasForeignKey(request => request.TicketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(request => request.Note)
+                .WithMany()
+                .HasForeignKey(request => request.NoteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(request => request.RequestedByUser)
+                .WithMany()
+                .HasForeignKey(request => request.RequestedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(request => request.TargetAssigneeUser)
+                .WithMany()
+                .HasForeignKey(request => request.TargetAssigneeUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(request => new { request.TargetAssigneeUserId, request.Status, request.RequestedAtUtc });
+            entity.HasIndex(request => new { request.TicketId, request.RequestedAtUtc });
+        });
+
+        modelBuilder.Entity<UserNotification>(entity =>
+        {
+            entity.ToTable("UserNotifications");
+            entity.HasKey(notification => notification.Id);
+            entity.Property(notification => notification.Type)
+                .HasMaxLength(100)
+                .IsRequired();
+            entity.Property(notification => notification.PayloadJson)
+                .HasMaxLength(4000)
+                .IsRequired();
+            entity.Property(notification => notification.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(notification => notification.ReadAtUtc);
+
+            entity.HasOne(notification => notification.RecipientUser)
+                .WithMany()
+                .HasForeignKey(notification => notification.RecipientUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(notification => new { notification.RecipientUserId, notification.CreatedAtUtc });
+            entity.HasIndex(notification => new { notification.RecipientUserId, notification.ReadAtUtc });
         });
     }
 }

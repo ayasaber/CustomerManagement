@@ -362,6 +362,253 @@
       }
     },
     {
+      "DownstreamPathTemplate": "/api/dashboard/me/assigned-tickets",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/dashboard/me/assigned-tickets",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/dashboard/me/open-tasks",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/dashboard/me/open-tasks",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/dashboard/tickets/{ticketId}/customer-context",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/dashboard/tickets/{ticketId}/customer-context",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/dashboard/agents",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/dashboard/agents",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/ticket-tasks",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/ticket-tasks",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/ticket-tasks/{taskId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/ticket-tasks/{taskId}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/ticket-tasks/{taskId}/complete",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/ticket-tasks/{taskId}/complete",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/quick-replies",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/quick-replies",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/quick-replies/{quickReplyId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/quick-replies/{quickReplyId}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/ticket-notes",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/ticket-notes",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/ticket-notes/{noteId}/handoff-requests",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/ticket-notes/{noteId}/handoff-requests",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/ticket-notes/handoff-requests/me",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/ticket-notes/handoff-requests/me",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/ticket-notes/handoff-requests/{handoffRequestId}/respond",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/ticket-notes/handoff-requests/{handoffRequestId}/respond",
+      "UpstreamHttpMethod": [ "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
       "DownstreamPathTemplate": "/api/auth/register",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [

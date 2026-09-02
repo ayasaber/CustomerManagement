@@ -17,5 +17,7 @@ Entry point for the **agent-dashboard** feature. Stories execute in order by the
 - Story 14 establishes dashboard read contracts early so UI can integrate against stable API shapes.
 - Story 15 introduces ticket-linked tasks and backfills Story 14 open-task placeholder with real data.
 - Story 16 isolates quick-reply catalog management to admin/agent permission boundaries.
-- Story 17 separates collaboration notes/mentions from ticket assignment side effects and keeps handoff explicit.
-- Story 18 is the end-to-end integration layer (gateway + Angular) after backend contracts are stable.
+- Story 17 separates collaboration notes/mentions from ticket assignment side effects, keeps handoff explicit, and requires persisted in-app notification records for mentions and handoff requests.
+- Story 17 also requires auditable handoff lifecycle history entries (request/respond, plus assignment history on accept).
+- Story 18 is the end-to-end integration layer (gateway + Angular) after backend contracts are stable, including visible "my handoff requests" actions for agents.
+- Story 18 must source mention/handoff options from a dashboard-safe agent directory route (`/api/dashboard/agents`) rather than admin-only APIs.

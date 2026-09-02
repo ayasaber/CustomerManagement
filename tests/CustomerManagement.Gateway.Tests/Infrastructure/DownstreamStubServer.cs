@@ -47,6 +47,26 @@ public sealed class DownstreamStubServer : IAsyncDisposable
             ["GET", "POST", "PUT"],
             (Delegate)HandleRequestAsync);
 
+        app.MapMethods(
+            "/api/dashboard/{**catchAll}",
+            ["GET"],
+            (Delegate)HandleRequestAsync);
+
+        app.MapMethods(
+            "/api/ticket-tasks/{**catchAll}",
+            ["GET", "POST", "PUT"],
+            (Delegate)HandleRequestAsync);
+
+        app.MapMethods(
+            "/api/quick-replies/{**catchAll}",
+            ["GET", "POST", "PUT"],
+            (Delegate)HandleRequestAsync);
+
+        app.MapMethods(
+            "/api/ticket-notes/{**catchAll}",
+            ["GET", "POST"],
+            (Delegate)HandleRequestAsync);
+
         await app.StartAsync(cancellationToken);
 
         var address = app.Urls.Single();
@@ -79,9 +99,7 @@ public sealed class DownstreamStubServer : IAsyncDisposable
         }
 
         var permissions = principal.FindAll("permission").Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var requiredReadPermission = path.StartsWith("/api/tickets", StringComparison.OrdinalIgnoreCase)
-            ? "tickets.read"
-            : "customers.read";
+        var requiredReadPermission = ResolveRequiredPermission(path);
 
         if (!permissions.Contains(requiredReadPermission))
         {
@@ -145,6 +163,36 @@ public sealed class DownstreamStubServer : IAsyncDisposable
             forwardedUserId = context.Request.Headers["X-User-Id"].ToString(),
             forwardedEmail = context.Request.Headers["X-User-Email"].ToString()
         }, statusCode: (int)HttpStatusCode.OK);
+    }
+
+    private static string ResolveRequiredPermission(string path)
+    {
+        if (path.StartsWith("/api/tickets", StringComparison.OrdinalIgnoreCase))
+        {
+            return "tickets.read";
+        }
+
+        if (path.StartsWith("/api/dashboard", StringComparison.OrdinalIgnoreCase))
+        {
+            return "dashboard.read";
+        }
+
+        if (path.StartsWith("/api/ticket-tasks", StringComparison.OrdinalIgnoreCase))
+        {
+            return "ticket-tasks.read";
+        }
+
+        if (path.StartsWith("/api/quick-replies", StringComparison.OrdinalIgnoreCase))
+        {
+            return "quick-replies.read";
+        }
+
+        if (path.StartsWith("/api/ticket-notes", StringComparison.OrdinalIgnoreCase))
+        {
+            return "ticket-notes.read";
+        }
+
+        return "customers.read";
     }
 
     private static ClaimsPrincipal? ValidateToken(string jwt)

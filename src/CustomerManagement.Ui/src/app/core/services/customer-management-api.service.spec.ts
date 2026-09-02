@@ -52,13 +52,13 @@ describe('CustomerManagementApiService', () => {
   it('should map validation errors to user-friendly message', () => {
     let actualError = '';
 
-    service.createProfile({ name: '', company: null, contactDetails: null }).subscribe({
+    service.updateProfile('abc', { name: '', company: null, rowVersion: 'AAAAAAAAB9E=' }).subscribe({
       error: (error: Error) => {
         actualError = error.message;
       }
     });
 
-    const req = httpMock.expectOne('http://localhost:5101/api/customers');
+    const req = httpMock.expectOne('http://localhost:5101/api/customers/abc');
     req.flush(
       {
         title: 'One or more validation errors occurred.',

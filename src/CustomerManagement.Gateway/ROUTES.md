@@ -36,6 +36,24 @@ Customer and ticket-management APIs are exposed via Ocelot under the `/api/custo
 | `/api/tickets/{ticketId}/reopen` | `POST` | `/api/tickets/{ticketId}/reopen` | Reopen resolved/closed ticket |
 | `/api/tickets/{ticketId}/history` | `GET` | `/api/tickets/{ticketId}/history` | Read ticket history |
 
+## Agent Dashboard Route Contract
+
+| Upstream Path | Methods | Downstream Path | Purpose |
+|---|---|---|---|
+| `/api/dashboard/me/assigned-tickets` | `GET` | `/api/dashboard/me/assigned-tickets` | List current agent assigned tickets |
+| `/api/dashboard/me/open-tasks` | `GET` | `/api/dashboard/me/open-tasks` | List current agent open task summaries |
+| `/api/dashboard/tickets/{ticketId}/customer-context` | `GET` | `/api/dashboard/tickets/{ticketId}/customer-context` | Load customer context for selected ticket |
+| `/api/dashboard/agents` | `GET` | `/api/dashboard/agents` | List assignable agents for mentions and handoff targets |
+| `/api/ticket-tasks` | `GET`, `POST` | `/api/ticket-tasks` | List/create ticket tasks |
+| `/api/ticket-tasks/{taskId}` | `PUT` | `/api/ticket-tasks/{taskId}` | Update ticket task |
+| `/api/ticket-tasks/{taskId}/complete` | `PUT` | `/api/ticket-tasks/{taskId}/complete` | Complete ticket task |
+| `/api/quick-replies` | `GET`, `POST` | `/api/quick-replies` | List/create shared quick replies |
+| `/api/quick-replies/{quickReplyId}` | `PUT` | `/api/quick-replies/{quickReplyId}` | Update shared quick reply |
+| `/api/ticket-notes` | `GET`, `POST` | `/api/ticket-notes` | List/create ticket internal notes |
+| `/api/ticket-notes/{noteId}/handoff-requests` | `POST` | `/api/ticket-notes/{noteId}/handoff-requests` | Create ticket handoff request |
+| `/api/ticket-notes/handoff-requests/me` | `GET` | `/api/ticket-notes/handoff-requests/me` | List current agent handoff inbox |
+| `/api/ticket-notes/handoff-requests/{handoffRequestId}/respond` | `POST` | `/api/ticket-notes/handoff-requests/{handoffRequestId}/respond` | Accept/reject handoff request |
+
 ## Auth Route Contract
 
 | Upstream Path | Methods | Downstream Path | Auth |

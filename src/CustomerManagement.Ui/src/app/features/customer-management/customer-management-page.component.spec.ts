@@ -5,6 +5,8 @@ import { CustomerManagementApiService } from '../../core/services/customer-manag
 import { CustomerManagementPageComponent } from './customer-management-page.component';
 
 class CustomerManagementApiServiceStub {
+  listCustomers = jasmine.createSpy().and.returnValue(of({ page: 1, pageSize: 100, totalCount: 0, items: [] }));
+
   getProfile = jasmine.createSpy().and.returnValue(
     of({
       id: 'cust-1',

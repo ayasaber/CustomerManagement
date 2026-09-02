@@ -83,10 +83,12 @@ describe('Auth Smoke Flows', () => {
 
     component.selectRole('customer');
     component.form.patchValue({
-      displayName: 'Customer User',
       email: 'customer@crm.local',
       password: 'Customer!23456',
-      confirmPassword: 'Customer!23456'
+      confirmPassword: 'Customer!23456',
+      fullName: 'Customer User',
+      company: 'Contoso',
+      primaryContactValue: 'customer@crm.local'
     });
 
     component.submit();

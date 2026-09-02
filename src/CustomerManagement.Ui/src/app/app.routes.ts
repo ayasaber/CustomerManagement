@@ -11,9 +11,9 @@ import { AdminTicketTaxonomyPageComponent } from './features/admin/ticket-taxono
 import { AdminUsersPageComponent } from './features/admin/users/admin-users-page.component';
 import { LoginPageComponent } from './features/auth/login/login-page.component';
 import { RegisterPageComponent } from './features/auth/register/register-page.component';
+import { AgentDashboardPageComponent } from './features/agent-dashboard/agent-dashboard-page.component';
 import { CustomerManagementPageComponent } from './features/customer-management/customer-management-page.component';
 import { ForbiddenPageComponent } from './features/customer-management/forbidden-page.component';
-import { AgentDashboardPageComponent } from './features/landing/agent-dashboard-page.component';
 import { CustomerPortalPageComponent } from './features/landing/customer-portal-page.component';
 import { TicketManagementPageComponent } from './features/tickets/ticket-management-page.component';
 
@@ -62,7 +62,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'agent/dashboard',
-		canActivate: [authenticatedGuard],
+		canActivate: [agentOnlyGuard],
 		component: AgentDashboardPageComponent
 	},
 	{

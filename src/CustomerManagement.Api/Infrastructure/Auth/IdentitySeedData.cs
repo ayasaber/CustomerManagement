@@ -1,4 +1,5 @@
 using CustomerManagement.Api.Domain.Security;
+using CustomerManagement.Api.Domain.Dashboard;
 using CustomerManagement.Api.Domain.Tickets;
 using CustomerManagement.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -57,6 +58,7 @@ public static class IdentitySeedData
         await EnsurePermissionsAsync(dbContext, cancellationToken: default);
         await EnsureSystemSettingsAsync(dbContext, cancellationToken: default);
         await EnsureTicketTaxonomyAsync(dbContext, cancellationToken: default);
+        await EnsureQuickRepliesAsync(dbContext, adminUser.Id, cancellationToken: default);
     }
 
     private static async Task EnsureRoleAsync(RoleManager<IdentityRole<Guid>> roleManager, string roleName)
@@ -97,7 +99,13 @@ public static class IdentitySeedData
             [Permissions.TicketTasksWrite] = "Create and update ticket-linked tasks.",
             [Permissions.TicketTasksComplete] = "Mark ticket-linked tasks as completed.",
             [Permissions.QuickRepliesRead] = "Read shared quick replies.",
-            [Permissions.QuickRepliesManage] = "Manage shared quick replies."
+            [Permissions.QuickRepliesManage] = "Manage shared quick replies.",
+            [Permissions.TicketInternalNotesRead] = "Read internal ticket notes.",
+            [Permissions.TicketInternalNotesWrite] = "Write internal ticket notes.",
+            [Permissions.TicketMentionsNotify] = "Create ticket mention notifications.",
+            [Permissions.TicketHandoffRequestCreate] = "Create ticket handoff requests.",
+            [Permissions.TicketHandoffRespond] = "Respond to ticket handoff requests.",
+            [Permissions.TicketHandoffForceAssign] = "Force assign tickets via handoff override."
         };
 
         var existingPermissions = await dbContext.Permissions
@@ -154,7 +162,13 @@ public static class IdentitySeedData
                 Permissions.TicketTasksWrite,
                 Permissions.TicketTasksComplete,
                 Permissions.QuickRepliesRead,
-                Permissions.QuickRepliesManage
+                Permissions.QuickRepliesManage,
+                Permissions.TicketInternalNotesRead,
+                Permissions.TicketInternalNotesWrite,
+                Permissions.TicketMentionsNotify,
+                Permissions.TicketHandoffRequestCreate,
+                Permissions.TicketHandoffRespond,
+                Permissions.TicketHandoffForceAssign
             ],
             [AuthRoles.Agent] =
             [
@@ -170,7 +184,12 @@ public static class IdentitySeedData
                 Permissions.TicketTasksRead,
                 Permissions.TicketTasksWrite,
                 Permissions.TicketTasksComplete,
-                Permissions.QuickRepliesRead
+                Permissions.QuickRepliesRead,
+                Permissions.TicketInternalNotesRead,
+                Permissions.TicketInternalNotesWrite,
+                Permissions.TicketMentionsNotify,
+                Permissions.TicketHandoffRequestCreate,
+                Permissions.TicketHandoffRespond
             ],
             [AuthRoles.Customer] =
             [
@@ -323,6 +342,62 @@ public static class IdentitySeedData
                 Name = priority.Name,
                 SortOrder = priority.SortOrder,
                 IsActive = true,
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now
+            });
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task EnsureQuickRepliesAsync(
+        CustomerManagementDbContext dbContext,
+        Guid adminUserId,
+        CancellationToken cancellationToken)
+    {
+        var defaults = new (string Title, string Body, string[] Tags)[]
+        {
+            (
+                "Greeting And Ownership",
+                "Hello, thanks for contacting support. I am reviewing your ticket now and will keep you updated.",
+                ["greeting", "ownership"]
+            ),
+            (
+                "Need More Information",
+                "To move forward quickly, please share the exact error message, screenshot, and when the issue started.",
+                ["triage", "info-request"]
+            ),
+            (
+                "Issue Resolved Confirmation",
+                "We applied a fix on our side. Please confirm whether the issue is now resolved for you.",
+                ["resolution", "confirmation"]
+            )
+        };
+
+        var existingTitles = await dbContext.QuickReplies
+            .AsNoTracking()
+            .Select(row => row.Title)
+            .ToListAsync(cancellationToken);
+
+        var titleSet = existingTitles.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var now = DateTime.UtcNow;
+
+        foreach (var item in defaults)
+        {
+            if (titleSet.Contains(item.Title))
+            {
+                continue;
+            }
+
+            dbContext.QuickReplies.Add(new QuickReply
+            {
+                Id = Guid.NewGuid(),
+                Title = item.Title,
+                Body = item.Body,
+                TagsCsv = "," + string.Join(',', item.Tags.Select(tag => tag.Trim().ToLowerInvariant())) + ",",
+                IsActive = true,
+                CreatedByUserId = adminUserId,
+                UpdatedByUserId = adminUserId,
                 CreatedAtUtc = now,
                 UpdatedAtUtc = now
             });

@@ -111,6 +111,7 @@ app.MapTicketPriorityEndpoints();
 app.MapTicketEndpoints();
 app.MapAgentDashboardEndpoints();
 app.MapTicketTasksEndpoints();
+app.MapTicketNotesEndpoints();
 app.MapQuickRepliesEndpoints();
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
