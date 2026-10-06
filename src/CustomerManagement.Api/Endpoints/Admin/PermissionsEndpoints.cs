@@ -32,6 +32,10 @@ public static class PermissionsEndpoints
             .RequireAuthorization("Permission:" + Permissions.RolesManage)
             .WithTags("Admin.RolePermissions");
 
+        rolePermissionsGroup.MapGet("", ListRolesAsync)
+            .WithName("ListRoles")
+            .WithSummary("List roles with ids for role-permission administration");
+
         rolePermissionsGroup.MapGet("/{roleId:guid}/permissions", GetRolePermissionsAsync)
             .WithName("GetRolePermissions")
             .WithSummary("Get permissions assigned to a role");
@@ -170,6 +174,19 @@ public static class PermissionsEndpoints
             .ToListAsync(cancellationToken);
 
         return Results.Ok(new RolePermissionsResponse(roleId, role.Name ?? string.Empty, permissions));
+    }
+
+    private static async Task<IResult> ListRolesAsync(
+        CustomerManagementDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var roles = await dbContext.Roles
+            .AsNoTracking()
+            .OrderBy(r => r.Name)
+            .Select(r => new RoleSummaryResponse(r.Id, r.Name ?? string.Empty))
+            .ToListAsync(cancellationToken);
+
+        return Results.Ok(roles);
     }
 
     private static async Task<IResult> UpdateRolePermissionsAsync(

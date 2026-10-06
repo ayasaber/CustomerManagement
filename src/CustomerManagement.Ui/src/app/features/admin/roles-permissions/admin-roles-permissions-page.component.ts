@@ -31,13 +31,13 @@ interface RoleTarget {
         </label>
         <label>
           Role Id (GUID)
-          <input [formControl]="roleIdControl" placeholder="paste role id" />
+          <input [formControl]="roleIdControl" placeholder="auto-filled from selected role when available" />
         </label>
       </div>
 
       <div style="margin-top: 0.8rem; display: flex; gap: 0.6rem;">
-        <button class="btn-secondary" type="button" (click)="loadRolePermissions()" [disabled]="!roleIdControl.value">Load</button>
-        <button class="btn-primary" type="button" (click)="save()" [disabled]="loading() || !roleIdControl.value">Save</button>
+        <button class="btn-secondary" type="button" (click)="loadRolePermissions()" [disabled]="!resolvedRoleId()">Load</button>
+        <button class="btn-primary" type="button" (click)="save()" [disabled]="loading() || !resolvedRoleId()">Save</button>
       </div>
 
       <div style="margin-top: 1rem;" *ngIf="permissions().length > 0">
@@ -81,6 +81,31 @@ export class AdminRolesPermissionsPageComponent implements OnInit {
       error: (error: Error) => this.error.set(error.message)
     });
 
+    this.adminApi.listRoles().subscribe({
+      next: (roles) => {
+        const knownRolesByName = new Map(
+          roles
+            .filter((role) => role.name?.trim().length > 0)
+            .map((role) => [role.name.trim().toLowerCase(), role.id] as const)
+        );
+
+        const merged = this.roles().map((role) => ({
+          ...role,
+          roleId: knownRolesByName.get(role.name.toLowerCase()) ?? role.roleId
+        }));
+
+        this.roles.set(merged);
+
+        const selected = this.roleControl.value;
+        if (selected) {
+          const resolved = merged.find((item) => item.name === selected.name);
+          this.roleControl.setValue(resolved ?? selected);
+          this.roleIdControl.setValue(resolved?.roleId ?? this.roleIdControl.value);
+        }
+      },
+      error: (error: Error) => this.error.set(error.message)
+    });
+
     const selected = this.roleControl.value;
     if (selected?.roleId) {
       this.roleIdControl.setValue(selected.roleId);
@@ -92,13 +117,14 @@ export class AdminRolesPermissionsPageComponent implements OnInit {
   }
 
   loadRolePermissions(): void {
-    if (!this.roleIdControl.value) {
+    const roleId = this.resolvedRoleId();
+    if (!roleId) {
       return;
     }
 
     this.beginRequest();
     this.adminApi
-      .getRolePermissions(this.roleIdControl.value)
+      .getRolePermissions(roleId)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (response) => {
@@ -110,13 +136,14 @@ export class AdminRolesPermissionsPageComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.roleIdControl.value) {
+    const roleId = this.resolvedRoleId();
+    if (!roleId) {
       return;
     }
 
     this.beginRequest();
     this.adminApi
-      .updateRolePermissions(this.roleIdControl.value, Array.from(this.selectedPermissionIds()))
+      .updateRolePermissions(roleId, Array.from(this.selectedPermissionIds()))
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (response) => {
@@ -143,5 +170,13 @@ export class AdminRolesPermissionsPageComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     this.success.set('');
+  }
+
+  resolvedRoleId(): string {
+    if (this.roleIdControl.value?.trim()) {
+      return this.roleIdControl.value.trim();
+    }
+
+    return this.roleControl.value?.roleId?.trim() ?? '';
   }
 }

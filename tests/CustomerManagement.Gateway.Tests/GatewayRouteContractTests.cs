@@ -20,7 +20,7 @@ public sealed class GatewayRouteContractTests
             })
             .ToList();
 
-        Assert.Equal(37, routes.Count);
+        Assert.Equal(47, routes.Count);
 
         var customerRoutes = routes
             .Where(route => route.UpstreamPathTemplate.StartsWith("/api/customers", StringComparison.OrdinalIgnoreCase))
@@ -56,6 +56,11 @@ public sealed class GatewayRouteContractTests
             .Where(route => route.UpstreamPathTemplate.StartsWith("/api/ticket-messages", StringComparison.OrdinalIgnoreCase))
             .ToList();
         Assert.Single(ticketMessageRoutes);
+
+        var adminRoutes = routes
+            .Where(route => route.UpstreamPathTemplate.StartsWith("/api/admin", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Equal(10, adminRoutes.Count);
 
         var duplicates = routes
             .SelectMany(route => route.Methods.Select(method => $"{method}:{route.UpstreamPathTemplate}"))
@@ -104,6 +109,17 @@ public sealed class GatewayRouteContractTests
         Assert.Contains(ticketNoteRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-notes/handoff-requests/{handoffRequestId}/respond", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
 
         Assert.Contains(ticketMessageRoutes, route => route.UpstreamPathTemplate.Equals("/api/ticket-messages", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "POST"]));
+
+        Assert.Contains(adminRoutes, route => route.UpstreamPathTemplate.Equals("/api/admin/users", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "POST"]));
+        Assert.Contains(adminRoutes, route => route.UpstreamPathTemplate.Equals("/api/admin/users/{userId}", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["DELETE", "GET", "PUT"]));
+        Assert.Contains(adminRoutes, route => route.UpstreamPathTemplate.Equals("/api/admin/users/{userId}/roles", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["PUT"]));
+        Assert.Contains(adminRoutes, route => route.UpstreamPathTemplate.Equals("/api/admin/permissions", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "POST"]));
+        Assert.Contains(adminRoutes, route => route.UpstreamPathTemplate.Equals("/api/admin/permissions/{permissionId}", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["PUT"]));
+        Assert.Contains(adminRoutes, route => route.UpstreamPathTemplate.Equals("/api/admin/roles", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
+        Assert.Contains(adminRoutes, route => route.UpstreamPathTemplate.Equals("/api/admin/roles/{roleId}/permissions", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "PUT"]));
+        Assert.Contains(adminRoutes, route => route.UpstreamPathTemplate.Equals("/api/admin/audit-logs", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
+        Assert.Contains(adminRoutes, route => route.UpstreamPathTemplate.Equals("/api/admin/system-settings", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET"]));
+        Assert.Contains(adminRoutes, route => route.UpstreamPathTemplate.Equals("/api/admin/system-settings/{key}", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["GET", "PUT"]));
 
         Assert.Contains(routes, route => route.UpstreamPathTemplate.Equals("/api/auth/register", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));
         Assert.Contains(routes, route => route.UpstreamPathTemplate.Equals("/api/auth/login", StringComparison.OrdinalIgnoreCase) && route.Methods.SequenceEqual(["POST"]));

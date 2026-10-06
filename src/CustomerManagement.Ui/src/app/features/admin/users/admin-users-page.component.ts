@@ -9,6 +9,7 @@ import {
   UpdateAdminUserRequest,
   UpdateUserRolesRequest
 } from '../../../core/services/admin-api.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-users-page',
@@ -52,7 +53,7 @@ import {
               <td>
                 <button class="btn-secondary" type="button" (click)="openEditPanel(user)">Edit</button>
                 <button class="btn-secondary" type="button" (click)="openRolesModal(user)">Roles</button>
-                <button class="btn-danger" type="button" (click)="deactivate(user)">Deactivate</button>
+                <button class="btn-danger" type="button" (click)="deactivate(user)" [disabled]="isCurrentUser(user)">Deactivate</button>
               </td>
             </tr>
           </tbody>
@@ -138,6 +139,7 @@ import {
 export class AdminUsersPageComponent implements OnInit {
   private readonly adminApi = inject(AdminApiService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
 
   readonly users = signal<AdminUserResponse[]>([]);
   readonly loading = signal(false);
@@ -151,7 +153,14 @@ export class AdminUsersPageComponent implements OnInit {
   readonly createForm = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     displayName: ['', [Validators.required, Validators.maxLength(200)]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
+    password: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/)
+      ]
+    ],
     roles: ['agent', [Validators.required]]
   });
 
@@ -197,11 +206,18 @@ export class AdminUsersPageComponent implements OnInit {
     }
 
     this.beginRequest();
+    const parsedRoles = this.parseRoles(this.createForm.controls.roles.value);
+    if (parsedRoles.length === 0) {
+      this.loading.set(false);
+      this.error.set('At least one role is required.');
+      return;
+    }
+
     const request: CreateAdminUserRequest = {
       email: this.createForm.controls.email.value.trim(),
       displayName: this.createForm.controls.displayName.value.trim(),
       password: this.createForm.controls.password.value,
-      roles: this.parseRoles(this.createForm.controls.roles.value)
+      roles: parsedRoles
     };
 
     this.adminApi
@@ -290,6 +306,11 @@ export class AdminUsersPageComponent implements OnInit {
   }
 
   deactivate(user: AdminUserResponse): void {
+    if (this.isCurrentUser(user)) {
+      this.error.set('Administrators cannot deactivate their own account.');
+      return;
+    }
+
     const confirmed = window.confirm(`Deactivate ${user.email}?`);
     if (!confirmed) {
       return;
@@ -319,5 +340,14 @@ export class AdminUsersPageComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     this.success.set('');
+  }
+
+  isCurrentUser(user: AdminUserResponse): boolean {
+    const currentUser = this.authService.currentUser()();
+    if (!currentUser) {
+      return false;
+    }
+
+    return currentUser.userId === user.id || currentUser.email.toLowerCase() === user.email.toLowerCase();
   }
 }

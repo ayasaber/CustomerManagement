@@ -208,21 +208,13 @@ public static class UsersEndpoints
                 return Results.Conflict(new { message = "An account with this email already exists." });
             }
 
-            return Results.BadRequest(new
-            {
-                message = "User creation failed.",
-                errors = createResult.Errors.Select(e => e.Description)
-            });
+            return Results.ValidationProblem(MapIdentityErrors(createResult.Errors));
         }
 
         var roleResult = await userManager.AddToRolesAsync(user, normalizedRoles);
         if (!roleResult.Succeeded)
         {
-            return Results.BadRequest(new
-            {
-                message = "Role assignment failed.",
-                errors = roleResult.Errors.Select(e => e.Description)
-            });
+            return Results.ValidationProblem(MapIdentityErrors(roleResult.Errors));
         }
 
         var createdUser = await dbContext.Users
@@ -246,10 +238,15 @@ public static class UsersEndpoints
             return Results.ValidationProblem(errors);
         }
 
-        var actorId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                      httpContext.User.FindFirstValue("sub");
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
-        if (request.IsActive == false && Guid.TryParse(actorId, out var actorGuid) && actorGuid == userId)
+        if (user is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (request.IsActive == false && IsSelfActionTarget(userId, user, httpContext.User))
         {
             return Results.BadRequest(new ProblemDetails
             {
@@ -257,14 +254,6 @@ public static class UsersEndpoints
                 Detail = "Administrators cannot deactivate their own account.",
                 Status = StatusCodes.Status400BadRequest
             });
-        }
-
-        var user = await dbContext.Users
-            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
-
-        if (user is null)
-        {
-            return Results.NotFound();
         }
 
         user.DisplayName = request.DisplayName.Trim();
@@ -421,10 +410,15 @@ public static class UsersEndpoints
         IAuditLogWriter auditLogWriter,
         CancellationToken cancellationToken)
     {
-        var actorId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                      httpContext.User.FindFirstValue("sub");
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
-        if (Guid.TryParse(actorId, out var actorGuid) && actorGuid == userId)
+        if (user is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (IsSelfActionTarget(userId, user, httpContext.User))
         {
             return Results.BadRequest(new ProblemDetails
             {
@@ -432,14 +426,6 @@ public static class UsersEndpoints
                 Detail = "Administrators cannot deactivate their own account.",
                 Status = StatusCodes.Status400BadRequest
             });
-        }
-
-        var user = await dbContext.Users
-            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
-
-        if (user is null)
-        {
-            return Results.NotFound();
         }
 
         user.IsActive = false;
@@ -457,7 +443,7 @@ public static class UsersEndpoints
                 "User",
                 userId.ToString(),
                 "Success",
-                new { path = "deactivate-endpoint", actor = actorId }),
+                new { path = "deactivate-endpoint" }),
             cancellationToken);
 
         return Results.NoContent();
@@ -469,6 +455,50 @@ public static class UsersEndpoints
                       principal.FindFirstValue("sub");
 
         return Guid.TryParse(actorId, out var parsed) ? parsed : null;
+    }
+
+    private static bool IsSelfActionTarget(Guid targetUserId, ApplicationUser targetUser, ClaimsPrincipal principal)
+    {
+        var actorUserId = TryParseActorId(principal);
+        if (actorUserId.HasValue && actorUserId.Value == targetUserId)
+        {
+            return true;
+        }
+
+        var actorEmail = principal.FindFirstValue(ClaimTypes.Email) ?? principal.FindFirstValue("email");
+        if (string.IsNullOrWhiteSpace(actorEmail) || string.IsNullOrWhiteSpace(targetUser.Email))
+        {
+            return false;
+        }
+
+        return string.Equals(actorEmail.Trim(), targetUser.Email.Trim(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static Dictionary<string, string[]> MapIdentityErrors(IEnumerable<IdentityError> identityErrors)
+    {
+        var grouped = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var error in identityErrors)
+        {
+            var key = error.Code switch
+            {
+                "DuplicateEmail" => "email",
+                "DuplicateUserName" => "email",
+                "InvalidEmail" => "email",
+                _ when error.Code.StartsWith("Password", StringComparison.OrdinalIgnoreCase) => "password",
+                _ => "request"
+            };
+
+            if (!grouped.TryGetValue(key, out var list))
+            {
+                list = [];
+                grouped[key] = list;
+            }
+
+            list.Add(error.Description);
+        }
+
+        return grouped.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Distinct().ToArray(), StringComparer.OrdinalIgnoreCase);
     }
 
     private static async Task<Dictionary<Guid, IReadOnlyList<string>>> BuildRoleMapAsync(

@@ -52,6 +52,11 @@ export interface RolePermissionsResponse {
   permissions: PermissionResponse[];
 }
 
+export interface AdminRoleResponse {
+  id: string;
+  name: string;
+}
+
 export interface AuditLogItemResponse {
   id: string;
   occurredAtUtc: string;
@@ -202,6 +207,14 @@ export class AdminApiService {
     );
   }
 
+  listRoles(): Observable<AdminRoleResponse[]> {
+    return this.withAuth(() =>
+      this.http.get<AdminRoleResponse[]>(`${this.adminBaseUrl}/roles`, {
+        headers: this.authHeaders()
+      })
+    );
+  }
+
   queryAuditLogs(query: AuditLogQuery): Observable<AuditLogResponse> {
     let params = new HttpParams()
       .set('page', query.page ?? 1)
@@ -260,13 +273,20 @@ export class AdminApiService {
 
   private mapError(error: unknown): Observable<never> {
     const httpError = error as HttpErrorResponse;
-    const payload = httpError?.error as { message?: string; title?: string; detail?: string; errors?: Record<string, string[]> } | null;
+    const payload = httpError?.error as {
+      message?: string;
+      title?: string;
+      detail?: string;
+      errors?: Record<string, string[]> | string[];
+    } | null;
 
-    const validationMessage = payload?.errors
-      ? Object.entries(payload.errors)
-          .map(([key, values]) => `${key}: ${values.join(', ')}`)
-          .join(' | ')
-      : null;
+    const validationMessage = Array.isArray(payload?.errors)
+      ? payload.errors.join(' | ')
+      : payload?.errors
+        ? Object.entries(payload.errors)
+            .map(([key, values]) => `${key}: ${values.join(', ')}`)
+            .join(' | ')
+        : null;
 
     const message =
       validationMessage ||

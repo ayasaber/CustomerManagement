@@ -628,6 +628,196 @@
       }
     },
     {
+      "DownstreamPathTemplate": "/api/admin/users",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/admin/users",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/admin/users/{userId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/admin/users/{userId}",
+      "UpstreamHttpMethod": [ "GET", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/admin/users/{userId}/roles",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/admin/users/{userId}/roles",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/admin/permissions",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/admin/permissions",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/admin/permissions/{permissionId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/admin/permissions/{permissionId}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/admin/roles",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/admin/roles",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/admin/roles/{roleId}/permissions",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/admin/roles/{roleId}/permissions",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/admin/audit-logs",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/admin/audit-logs",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/admin/system-settings",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/admin/system-settings",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/admin/system-settings/{key}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/admin/system-settings/{key}",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
       "DownstreamPathTemplate": "/api/auth/register",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [

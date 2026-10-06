@@ -85,6 +85,21 @@ public sealed class AdminPermissionsEndpointsTests : IClassFixture<CustomerManag
         Assert.Equal(HttpStatusCode.BadRequest, invalidAssignResponse.StatusCode);
     }
 
+    [Fact]
+    public async Task ListRoles_ReturnsKnownRolesWithIds()
+    {
+        using var request = NewAdminRequest(HttpMethod.Get, "/api/admin/roles");
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var roles = await response.Content.ReadFromJsonAsync<List<RoleSummaryResponse>>();
+        Assert.NotNull(roles);
+        Assert.Contains(roles!, role => role.Name.Equals(AuthRoles.Admin, StringComparison.OrdinalIgnoreCase) && role.Id != Guid.Empty);
+        Assert.Contains(roles!, role => role.Name.Equals(AuthRoles.Agent, StringComparison.OrdinalIgnoreCase) && role.Id != Guid.Empty);
+        Assert.Contains(roles!, role => role.Name.Equals(AuthRoles.Customer, StringComparison.OrdinalIgnoreCase) && role.Id != Guid.Empty);
+    }
+
     private async Task<PermissionResponse> CreatePermissionAsync(string name)
     {
         using var createHttpRequest = NewAdminJsonRequest(

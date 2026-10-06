@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { AdminApiService } from '../../../core/services/admin-api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { AdminUsersPageComponent } from './admin-users-page.component';
 
 class AdminApiServiceStub {
@@ -42,6 +43,17 @@ class AdminApiServiceStub {
   deactivateUser = jasmine.createSpy().and.returnValue(of(void 0));
 }
 
+class AuthServiceStub {
+  currentUser = jasmine.createSpy().and.returnValue(() => ({
+    userId: 'not-u-1',
+    email: 'operator@crm.local',
+    roles: ['admin'],
+    permissions: ['admin.users.manage'],
+    accessTokenExpiresAtUtc: '2026-09-14T00:00:00Z',
+    refreshTokenExpiresAtUtc: '2026-09-14T00:00:00Z'
+  }));
+}
+
 describe('AdminUsersPageComponent', () => {
   let fixture: ComponentFixture<AdminUsersPageComponent>;
   let component: AdminUsersPageComponent;
@@ -50,7 +62,10 @@ describe('AdminUsersPageComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminUsersPageComponent],
-      providers: [{ provide: AdminApiService, useClass: AdminApiServiceStub }]
+      providers: [
+        { provide: AdminApiService, useClass: AdminApiServiceStub },
+        { provide: AuthService, useClass: AuthServiceStub }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminUsersPageComponent);
@@ -84,5 +99,28 @@ describe('AdminUsersPageComponent', () => {
     component.deactivate(component.users()[0]);
 
     expect(apiStub.deactivateUser).toHaveBeenCalledWith('u-1');
+  });
+
+  it('blocks self-deactivation', () => {
+    const selfUser = {
+      ...component.users()[0],
+      id: 'self-user-id',
+      email: 'self@crm.local'
+    };
+
+    const authStub = TestBed.inject(AuthService) as unknown as AuthServiceStub;
+    authStub.currentUser.and.returnValue(() => ({
+      userId: 'self-user-id',
+      email: 'self@crm.local',
+      roles: ['admin'],
+      permissions: ['admin.users.manage'],
+      accessTokenExpiresAtUtc: '2026-09-14T00:00:00Z',
+      refreshTokenExpiresAtUtc: '2026-09-14T00:00:00Z'
+    }));
+
+    component.deactivate(selfUser);
+
+    expect(apiStub.deactivateUser).not.toHaveBeenCalledWith('self-user-id');
+    expect(component.error()).toContain('cannot deactivate their own account');
   });
 });

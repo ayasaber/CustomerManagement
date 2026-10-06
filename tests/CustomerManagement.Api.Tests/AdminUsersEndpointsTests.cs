@@ -116,6 +116,18 @@ public sealed class AdminUsersEndpointsTests : IClassFixture<CustomerManagementA
         Assert.Equal(HttpStatusCode.Unauthorized, loginResponse.StatusCode);
     }
 
+    [Fact]
+    public async Task SoftDeactivateUser_BlocksSelfDeactivation()
+    {
+        var email = $"self-deactivate-{Guid.NewGuid():N}@crm.local";
+        var created = await CreateAdminUserAsync(email, "Self Admin", ["admin"], "Admin!23456");
+
+        using var deactivateRequest = NewAdminRequest(HttpMethod.Delete, $"/api/admin/users/{created.Id}", created.Id);
+        var response = await _client.SendAsync(deactivateRequest);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private async Task<AdminUserResponse> CreateAdminUserAsync(
         string email,
         string displayName,
@@ -141,17 +153,22 @@ public sealed class AdminUsersEndpointsTests : IClassFixture<CustomerManagementA
         return new CreateAdminUserRequest(email, password, displayName, roles);
     }
 
-    private static HttpRequestMessage NewAdminJsonRequest(HttpMethod method, string uri, object body)
+    private static HttpRequestMessage NewAdminJsonRequest(HttpMethod method, string uri, object body, Guid? actorUserId = null)
     {
-        var request = NewAdminRequest(method, uri);
+        var request = NewAdminRequest(method, uri, actorUserId);
         request.Content = JsonContent.Create(body);
         return request;
     }
 
-    private static HttpRequestMessage NewAdminRequest(HttpMethod method, string uri)
+    private static HttpRequestMessage NewAdminRequest(HttpMethod method, string uri, Guid? actorUserId = null)
     {
         var request = new HttpRequestMessage(method, uri);
         request.Headers.Add(TestAuthDefaults.RoleHeader, "admin");
+        if (actorUserId.HasValue)
+        {
+            request.Headers.Add(TestAuthDefaults.UserIdHeader, actorUserId.Value.ToString());
+        }
+
         return request;
     }
 }
