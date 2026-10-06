@@ -107,7 +107,11 @@ public static class IdentitySeedData
             [Permissions.TicketHandoffRespond] = "Respond to ticket handoff requests.",
             [Permissions.TicketHandoffForceAssign] = "Force assign tickets via handoff override.",
             [Permissions.TicketMessagesRead] = "Read customer-visible ticket conversation messages.",
-            [Permissions.TicketMessagesWrite] = "Post customer-visible ticket conversation messages."
+            [Permissions.TicketMessagesWrite] = "Post customer-visible ticket conversation messages (agent, admin, or the owning customer).",
+            [Permissions.FaqRead] = "Browse active FAQ entries.",
+            [Permissions.FaqManage] = "Create, update, and retire FAQ entries.",
+            [Permissions.FeedbackSubmit] = "Submit customer experience feedback.",
+            [Permissions.FeedbackRead] = "Read submitted customer feedback."
         };
 
         var existingPermissions = await dbContext.Permissions
@@ -172,7 +176,10 @@ public static class IdentitySeedData
                 Permissions.TicketHandoffRespond,
                 Permissions.TicketHandoffForceAssign,
                 Permissions.TicketMessagesRead,
-                Permissions.TicketMessagesWrite
+                Permissions.TicketMessagesWrite,
+                Permissions.FaqRead,
+                Permissions.FaqManage,
+                Permissions.FeedbackRead
             ],
             [AuthRoles.Agent] =
             [
@@ -195,14 +202,19 @@ public static class IdentitySeedData
                 Permissions.TicketHandoffRequestCreate,
                 Permissions.TicketHandoffRespond,
                 Permissions.TicketMessagesRead,
-                Permissions.TicketMessagesWrite
+                Permissions.TicketMessagesWrite,
+                Permissions.FaqRead,
+                Permissions.FeedbackRead
             ],
             [AuthRoles.Customer] =
             [
                 Permissions.TicketsRead,
                 Permissions.TicketsWrite,
                 Permissions.TicketsClose,
-                Permissions.TicketMessagesRead
+                Permissions.TicketMessagesRead,
+                Permissions.TicketMessagesWrite,
+                Permissions.FaqRead,
+                Permissions.FeedbackSubmit
             ]
         };
 

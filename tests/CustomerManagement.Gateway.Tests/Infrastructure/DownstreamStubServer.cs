@@ -72,6 +72,16 @@ public sealed class DownstreamStubServer : IAsyncDisposable
             ["GET", "POST"],
             (Delegate)HandleRequestAsync);
 
+        app.MapMethods(
+            "/api/faq/{**catchAll}",
+            ["GET", "POST", "PUT"],
+            (Delegate)HandleRequestAsync);
+
+        app.MapMethods(
+            "/api/feedback/{**catchAll}",
+            ["GET", "POST"],
+            (Delegate)HandleRequestAsync);
+
         await app.StartAsync(cancellationToken);
 
         var address = app.Urls.Single();
@@ -200,6 +210,16 @@ public sealed class DownstreamStubServer : IAsyncDisposable
         if (path.StartsWith("/api/ticket-messages", StringComparison.OrdinalIgnoreCase))
         {
             return "ticket-messages.read";
+        }
+
+        if (path.StartsWith("/api/faq", StringComparison.OrdinalIgnoreCase))
+        {
+            return "faq.read";
+        }
+
+        if (path.StartsWith("/api/feedback", StringComparison.OrdinalIgnoreCase))
+        {
+            return "feedback.read";
         }
 
         return "customers.read";

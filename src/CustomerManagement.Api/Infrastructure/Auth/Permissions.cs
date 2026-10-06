@@ -36,4 +36,10 @@ public static class Permissions
 
     public const string TicketMessagesRead = "ticket-messages.read";
     public const string TicketMessagesWrite = "ticket-messages.write";
+
+    public const string FaqRead = "faq.read";
+    public const string FaqManage = "faq.manage";
+
+    public const string FeedbackSubmit = "feedback.submit";
+    public const string FeedbackRead = "feedback.read";
 }

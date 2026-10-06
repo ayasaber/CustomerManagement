@@ -1,5 +1,6 @@
 using CustomerManagement.Api.Domain.Customers;
 using CustomerManagement.Api.Domain.Dashboard;
+using CustomerManagement.Api.Domain.Faq;
 using CustomerManagement.Api.Domain.Security;
 using CustomerManagement.Api.Domain.Tickets;
 using Microsoft.AspNetCore.Identity;
@@ -37,6 +38,8 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
 
     public DbSet<TicketPriority> TicketPriorities => Set<TicketPriority>();
 
+    public DbSet<FaqEntry> FaqEntries => Set<FaqEntry>();
+
     public DbSet<TicketHistoryEntry> TicketHistoryEntries => Set<TicketHistoryEntry>();
 
     public DbSet<TicketTask> TicketTasks => Set<TicketTask>();
@@ -50,6 +53,10 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
     public DbSet<TicketHandoffRequest> TicketHandoffRequests => Set<TicketHandoffRequest>();
 
     public DbSet<TicketMessage> TicketMessages => Set<TicketMessage>();
+
+    public DbSet<TicketAttachment> TicketAttachments => Set<TicketAttachment>();
+
+    public DbSet<Domain.Feedback.Feedback> FeedbackEntries => Set<Domain.Feedback.Feedback>();
 
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
 
@@ -394,6 +401,33 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
             entity.HasIndex(p => p.SortOrder);
         });
 
+        modelBuilder.Entity<FaqEntry>(entity =>
+        {
+            entity.ToTable("FaqEntries");
+            entity.HasKey(f => f.Id);
+            entity.Property(f => f.Topic)
+                .HasMaxLength(150)
+                .IsRequired();
+            entity.Property(f => f.Question)
+                .HasMaxLength(500)
+                .IsRequired();
+            entity.Property(f => f.Answer)
+                .HasMaxLength(4000)
+                .IsRequired();
+            entity.Property(f => f.SortOrder)
+                .IsRequired();
+            entity.Property(f => f.IsActive)
+                .IsRequired();
+            entity.Property(f => f.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(f => f.UpdatedAtUtc)
+                .IsRequired();
+            entity.Property(f => f.RowVersion)
+                .IsRowVersion();
+
+            entity.HasIndex(f => new { f.Topic, f.SortOrder });
+        });
+
         modelBuilder.Entity<Ticket>(entity =>
         {
             entity.ToTable("Tickets");
@@ -672,6 +706,56 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
 
             entity.HasIndex(message => new { message.TicketId, message.CreatedAtUtc, message.Id });
             entity.HasIndex(message => new { message.SenderUserId, message.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<TicketAttachment>(entity =>
+        {
+            entity.ToTable("TicketAttachments");
+            entity.HasKey(attachment => attachment.Id);
+            entity.Property(attachment => attachment.OriginalFileName)
+                .HasMaxLength(260)
+                .IsRequired();
+            entity.Property(attachment => attachment.ContentType)
+                .HasMaxLength(200)
+                .IsRequired();
+            entity.Property(attachment => attachment.SizeBytes)
+                .IsRequired();
+            entity.Property(attachment => attachment.StorageKey)
+                .HasMaxLength(400)
+                .IsRequired();
+            entity.Property(attachment => attachment.UploadedByUserId)
+                .IsRequired();
+            entity.Property(attachment => attachment.UploadedByDisplayName)
+                .HasMaxLength(200)
+                .IsRequired();
+            entity.Property(attachment => attachment.CreatedAtUtc)
+                .IsRequired();
+
+            entity.HasOne(attachment => attachment.Ticket)
+                .WithMany()
+                .HasForeignKey(attachment => attachment.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(attachment => new { attachment.TicketId, attachment.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<Domain.Feedback.Feedback>(entity =>
+        {
+            entity.ToTable("Feedback");
+            entity.HasKey(feedback => feedback.Id);
+            entity.Property(feedback => feedback.Rating)
+                .IsRequired();
+            entity.Property(feedback => feedback.Comment)
+                .HasMaxLength(2000);
+            entity.Property(feedback => feedback.CreatedAtUtc)
+                .IsRequired();
+
+            entity.HasOne(feedback => feedback.Customer)
+                .WithMany()
+                .HasForeignKey(feedback => feedback.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(feedback => new { feedback.CustomerId, feedback.CreatedAtUtc });
         });
 
         modelBuilder.Entity<UserNotification>(entity =>

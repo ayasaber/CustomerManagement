@@ -83,7 +83,27 @@ public static class TicketEndpoints
             });
         }
 
-        var errors = await ValidateCreateTicketAsync(resolvedCustomerId.Value, request, dbContext, cancellationToken);
+        Guid priorityId;
+        if (IsCustomer(httpContext.User))
+        {
+            // Customers never choose priority; the support team decides it after triage.
+            var defaultPriorityId = await ResolveDefaultPriorityIdAsync(dbContext, cancellationToken);
+            if (!defaultPriorityId.HasValue)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["priorityId"] = ["No active ticket priority is configured; contact an administrator."]
+                });
+            }
+
+            priorityId = defaultPriorityId.Value;
+        }
+        else
+        {
+            priorityId = request.PriorityId.GetValueOrDefault();
+        }
+
+        var errors = await ValidateCreateTicketAsync(resolvedCustomerId.Value, priorityId, request, dbContext, cancellationToken);
         if (errors.Count > 0)
         {
             return Results.ValidationProblem(errors);
@@ -104,7 +124,7 @@ public static class TicketEndpoints
             Id = Guid.NewGuid(),
             CustomerId = resolvedCustomerId.Value,
             CategoryId = request.CategoryId,
-            PriorityId = request.PriorityId,
+            PriorityId = priorityId,
             Subject = request.Subject.Trim(),
             Description = request.Description.Trim(),
             Status = TicketStatus.New,
@@ -809,11 +829,12 @@ public static class TicketEndpoints
 
     private static async Task<Dictionary<string, string[]>> ValidateCreateTicketAsync(
         Guid customerId,
+        Guid priorityId,
         CreateTicketRequest request,
         CustomerManagementDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var errors = ValidateCore(customerId, request.CategoryId, request.PriorityId, request.Subject, request.Description);
+        var errors = ValidateCore(customerId, request.CategoryId, priorityId, request.Subject, request.Description);
 
         if (errors.Count > 0)
         {
@@ -838,13 +859,37 @@ public static class TicketEndpoints
 
         var priorityExists = await dbContext.TicketPriorities
             .AsNoTracking()
-            .AnyAsync(priority => priority.Id == request.PriorityId && priority.IsActive, cancellationToken);
+            .AnyAsync(priority => priority.Id == priorityId && priority.IsActive, cancellationToken);
         if (!priorityExists)
         {
             errors["priorityId"] = ["Priority does not exist or is inactive."];
         }
 
         return errors;
+    }
+
+    private static async Task<Guid?> ResolveDefaultPriorityIdAsync(
+        CustomerManagementDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var activePriorities = await dbContext.TicketPriorities
+            .AsNoTracking()
+            .Where(priority => priority.IsActive)
+            .Select(priority => new { priority.Id, priority.Name, priority.SortOrder })
+            .ToListAsync(cancellationToken);
+
+        var normal = activePriorities
+            .FirstOrDefault(priority => string.Equals(priority.Name, "Normal", StringComparison.OrdinalIgnoreCase));
+
+        if (normal is not null)
+        {
+            return normal.Id;
+        }
+
+        return activePriorities
+            .OrderBy(priority => priority.SortOrder)
+            .Select(priority => (Guid?)priority.Id)
+            .FirstOrDefault();
     }
 
     private static async Task<Dictionary<string, string[]>> ValidateUpdateCoreAsync(

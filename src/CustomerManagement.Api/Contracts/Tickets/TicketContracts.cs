@@ -29,7 +29,7 @@ public sealed record TicketPriorityResponse(
 public sealed record CreateTicketRequest(
     Guid? CustomerUserId,
     Guid CategoryId,
-    Guid PriorityId,
+    Guid? PriorityId,
     string Subject,
     string Description);
 

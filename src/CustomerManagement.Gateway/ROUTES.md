@@ -35,6 +35,8 @@ Customer and ticket-management APIs are exposed via Ocelot under the `/api/custo
 | `/api/tickets/{ticketId}/escalate` | `POST` | `/api/tickets/{ticketId}/escalate` | Escalate ticket |
 | `/api/tickets/{ticketId}/reopen` | `POST` | `/api/tickets/{ticketId}/reopen` | Reopen resolved/closed ticket |
 | `/api/tickets/{ticketId}/history` | `GET` | `/api/tickets/{ticketId}/history` | Read ticket history |
+| `/api/tickets/{ticketId}/attachments` | `GET`, `POST` | `/api/tickets/{ticketId}/attachments` | List/upload ticket attachments (ownership-scoped the same as other ticket routes) |
+| `/api/tickets/{ticketId}/attachments/{attachmentId}/content` | `GET` | `/api/tickets/{ticketId}/attachments/{attachmentId}/content` | Download a ticket attachment |
 
 ## Agent Dashboard Route Contract
 
@@ -54,6 +56,19 @@ Customer and ticket-management APIs are exposed via Ocelot under the `/api/custo
 | `/api/ticket-notes/handoff-requests/me` | `GET` | `/api/ticket-notes/handoff-requests/me` | List current agent handoff inbox |
 | `/api/ticket-notes/handoff-requests/{handoffRequestId}/respond` | `POST` | `/api/ticket-notes/handoff-requests/{handoffRequestId}/respond` | Accept/reject handoff request |
 | `/api/ticket-messages` | `GET`, `POST` | `/api/ticket-messages` | List/post customer-visible ticket conversation messages (separate from internal notes) |
+
+## FAQ Route Contract
+
+| Upstream Path | Methods | Downstream Path | Auth |
+|---|---|---|---|
+| `/api/faq` | `GET`, `POST` | `/api/faq` | Read is customer/agent/admin; create requires admin FAQ-manage permission |
+| `/api/faq/{faqId}` | `PUT` | `/api/faq/{faqId}` | Update/retire an FAQ entry; admin FAQ-manage permission only |
+
+## Feedback Route Contract
+
+| Upstream Path | Methods | Downstream Path | Auth |
+|---|---|---|---|
+| `/api/feedback` | `GET`, `POST` | `/api/feedback` | Submit is customer-only; read is agent/admin-only |
 
 ## Auth Route Contract
 

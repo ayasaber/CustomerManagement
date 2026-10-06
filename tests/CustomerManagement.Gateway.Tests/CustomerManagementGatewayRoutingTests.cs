@@ -73,6 +73,9 @@ public sealed class CustomerManagementGatewayRoutingTests : IAsyncLifetime
     [InlineData("GET", "/api/tickets/priorities")]
     [InlineData("POST", "/api/tickets/priorities")]
     [InlineData("PUT", "/api/tickets/priorities/11111111-1111-1111-1111-111111111111")]
+    [InlineData("GET", "/api/tickets/11111111-1111-1111-1111-111111111111/attachments")]
+    [InlineData("POST", "/api/tickets/11111111-1111-1111-1111-111111111111/attachments")]
+    [InlineData("GET", "/api/tickets/11111111-1111-1111-1111-111111111111/attachments/22222222-2222-2222-2222-222222222222/content")]
     public async Task Gateway_RoutesTicketManagementRequests_ToDownstream(string method, string pathAndQuery)
     {
         using var request = NewAuthorizedRequest(
@@ -114,6 +117,11 @@ public sealed class CustomerManagementGatewayRoutingTests : IAsyncLifetime
     [InlineData("POST", "/api/ticket-notes/handoff-requests/11111111-1111-1111-1111-111111111111/respond")]
     [InlineData("GET", "/api/ticket-messages?ticketId=11111111-1111-1111-1111-111111111111&page=1&pageSize=20")]
     [InlineData("POST", "/api/ticket-messages")]
+    [InlineData("GET", "/api/faq")]
+    [InlineData("POST", "/api/faq")]
+    [InlineData("PUT", "/api/faq/11111111-1111-1111-1111-111111111111")]
+    [InlineData("GET", "/api/feedback?page=1&pageSize=20")]
+    [InlineData("POST", "/api/feedback")]
     public async Task Gateway_RoutesAgentDashboardRequests_ToDownstream(string method, string pathAndQuery)
     {
         using var request = NewAuthorizedRequest(
@@ -133,7 +141,11 @@ public sealed class CustomerManagementGatewayRoutingTests : IAsyncLifetime
                 "ticket-notes.write",
                 "ticket-handoff.request.create",
                 "ticket-handoff.respond",
-                "ticket-messages.read"
+                "ticket-messages.read",
+                "faq.read",
+                "faq.manage",
+                "feedback.read",
+                "feedback.submit"
             ]);
 
         var response = await _gatewayClient.SendAsync(request);

@@ -157,16 +157,6 @@ public static class TicketMessagesEndpoints
             return Results.Forbid();
         }
 
-        if (IsCustomer(httpContext.User))
-        {
-            return Results.Forbid();
-        }
-
-        if (!IsAdmin(httpContext.User) && !IsAgent(httpContext.User))
-        {
-            return Results.Forbid();
-        }
-
         var ticket = await dbContext.Tickets
             .FirstOrDefaultAsync(row => row.Id == request.TicketId, cancellationToken);
 
@@ -189,6 +179,42 @@ public static class TicketMessagesEndpoints
             return canView.ReturnNotFound ? Results.NotFound() : Results.Forbid();
         }
 
+        var isCustomerSender = IsCustomer(httpContext.User);
+        var now = DateTime.UtcNow;
+
+        if (isCustomerSender)
+        {
+            if (ticket.Status == TicketStatus.Closed)
+            {
+                return Results.BadRequest(new ProblemDetails
+                {
+                    Title = "Invalid operation",
+                    Detail = "This ticket is closed and can no longer receive replies.",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+            if (ticket.Status is TicketStatus.Resolved or TicketStatus.WaitingOnCustomer)
+            {
+                var previousStatus = ToApiStatus(ticket.Status);
+                ticket.Status = TicketStatus.InProgress;
+                ticket.UpdatedAtUtc = now;
+
+                dbContext.TicketHistoryEntries.Add(new TicketHistoryEntry
+                {
+                    Id = Guid.NewGuid(),
+                    TicketId = ticket.Id,
+                    ActionType = "ticket.status.auto-reopened",
+                    FieldName = "status",
+                    OldValue = previousStatus,
+                    NewValue = ToApiStatus(TicketStatus.InProgress),
+                    ActorUserId = actorUserId,
+                    ActorEmail = ResolveActorEmail(httpContext.User),
+                    OccurredAtUtc = now
+                });
+            }
+        }
+
         var sender = await dbContext.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(row => row.Id == actorUserId.Value && row.IsActive, cancellationToken);
@@ -198,12 +224,11 @@ public static class TicketMessagesEndpoints
             return Results.NotFound();
         }
 
-        var now = DateTime.UtcNow;
         var message = new TicketMessage
         {
             Id = Guid.NewGuid(),
             TicketId = ticket.Id,
-            SenderType = TicketMessageSenderType.Agent,
+            SenderType = isCustomerSender ? TicketMessageSenderType.Customer : TicketMessageSenderType.Agent,
             SenderUserId = sender.Id,
             SenderDisplayName = ResolveDisplayName(sender.DisplayName, sender.Email),
             Body = request.Body.Trim(),
@@ -370,6 +395,19 @@ public static class TicketMessagesEndpoints
     private static string ToApiSenderType(TicketMessageSenderType senderType)
     {
         return senderType == TicketMessageSenderType.Customer ? "customer" : "agent";
+    }
+
+    private static string ToApiStatus(TicketStatus status)
+    {
+        return status switch
+        {
+            TicketStatus.New => "new",
+            TicketStatus.InProgress => "in_progress",
+            TicketStatus.WaitingOnCustomer => "waiting_on_customer",
+            TicketStatus.Resolved => "resolved",
+            TicketStatus.Closed => "closed",
+            _ => "new"
+        };
     }
 
     private static string ResolveDisplayName(string displayName, string? email)

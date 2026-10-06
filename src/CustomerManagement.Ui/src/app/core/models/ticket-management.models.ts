@@ -45,7 +45,7 @@ export interface TicketPriorityResponse {
 export interface CreateTicketRequest {
   customerUserId?: string;
   categoryId: string;
-  priorityId: string;
+  priorityId?: string;
   subject: string;
   description: string;
 }
@@ -155,4 +155,15 @@ export interface CreateTicketMessageResponse {
 export interface ApiValidationError {
   title?: string;
   errors?: Record<string, string[]>;
+}
+
+export interface TicketAttachmentResponse {
+  id: string;
+  ticketId: string;
+  originalFileName: string;
+  contentType: string;
+  sizeBytes: number;
+  uploadedByUserId: string;
+  uploadedByDisplayName: string;
+  createdAtUtc: string;
 }

@@ -3,8 +3,10 @@ import { adminOnlyGuard } from './core/guards/admin-only.guard';
 import { authPageGuard } from './core/guards/auth-page.guard';
 import { authenticatedGuard } from './core/guards/authenticated.guard';
 import { agentOnlyGuard } from './core/guards/agent-only.guard';
+import { customerOnlyGuard } from './core/guards/customer-only.guard';
 import { AdminShellComponent } from './features/admin/admin-shell.component';
 import { AdminAuditLogPageComponent } from './features/admin/audit/admin-audit-log-page.component';
+import { AdminFaqPageComponent } from './features/admin/faq/admin-faq-page.component';
 import { AdminRolesPermissionsPageComponent } from './features/admin/roles-permissions/admin-roles-permissions-page.component';
 import { AdminSystemSettingsPageComponent } from './features/admin/settings/admin-system-settings-page.component';
 import { AdminTicketTaxonomyPageComponent } from './features/admin/ticket-taxonomy/admin-ticket-taxonomy-page.component';
@@ -57,6 +59,10 @@ export const routes: Routes = [
 			{
 				path: 'ticket-taxonomy',
 				component: AdminTicketTaxonomyPageComponent
+			},
+			{
+				path: 'faq',
+				component: AdminFaqPageComponent
 			}
 		]
 	},
@@ -67,7 +73,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'customer/portal',
-		canActivate: [authenticatedGuard],
+		canActivate: [customerOnlyGuard],
 		component: CustomerPortalPageComponent
 	},
 	{

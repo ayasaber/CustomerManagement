@@ -10,6 +10,7 @@ import {
   CreateTicketPriorityRequest,
   CreateTicketRequest,
   SelfAssignTicketRequest,
+  TicketAttachmentResponse,
   TicketCategoryResponse,
   TicketHistoryResponse,
   TicketListResponse,
@@ -152,6 +153,40 @@ export class TicketManagementApiService {
     return this.authService
       .withAutoRefresh(() =>
         this.http.post<CreateTicketMessageResponse>(this.ticketMessagesUrl, request, { headers: this.buildHeaders() })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  listTicketAttachments(ticketId: string): Observable<TicketAttachmentResponse[]> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.get<TicketAttachmentResponse[]>(`${this.baseUrl}/${ticketId}/attachments`, {
+          headers: this.buildHeaders()
+        })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  uploadTicketAttachment(ticketId: string, file: File): Observable<TicketAttachmentResponse> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.post<TicketAttachmentResponse>(`${this.baseUrl}/${ticketId}/attachments`, formData, {
+          headers: this.buildHeaders()
+        })
+      )
+      .pipe(catchError((error) => this.mapError(error)));
+  }
+
+  downloadTicketAttachment(ticketId: string, attachmentId: string): Observable<Blob> {
+    return this.authService
+      .withAutoRefresh(() =>
+        this.http.get(`${this.baseUrl}/${ticketId}/attachments/${attachmentId}/content`, {
+          headers: this.buildHeaders(),
+          responseType: 'blob'
+        })
       )
       .pipe(catchError((error) => this.mapError(error)));
   }
