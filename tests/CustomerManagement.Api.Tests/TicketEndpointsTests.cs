@@ -4,16 +4,21 @@ using CustomerManagement.Api.Contracts.Auth;
 using CustomerManagement.Api.Contracts.Customers;
 using CustomerManagement.Api.Contracts.Tickets;
 using CustomerManagement.Api.Endpoints.Customers;
+using CustomerManagement.Api.Infrastructure.Persistence;
 using CustomerManagement.Api.Tests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CustomerManagement.Api.Tests;
 
 public sealed class TicketEndpointsTests : IClassFixture<CustomerManagementApiFactory>
 {
     private readonly HttpClient _client;
+    private readonly CustomerManagementApiFactory _factory;
 
     public TicketEndpointsTests(CustomerManagementApiFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient();
     }
 
@@ -123,6 +128,132 @@ public sealed class TicketEndpointsTests : IClassFixture<CustomerManagementApiFa
         Assert.Equal(HttpStatusCode.BadRequest, transitionResponse.StatusCode);
     }
 
+    [Fact]
+    public async Task Ticket_CreatedByCustomerWithoutPriorityId_UsesNormalActivePriority()
+    {
+        var customer = await CreateCustomerAsync("Priority Default Customer", "Contoso");
+        var category = await CreateCategoryAsync($"General-{Guid.NewGuid():N}");
+
+        var createTicketRequest = new CreateTicketRequest(
+            null,
+            category.Id,
+            null,
+            "Need help without priority",
+            "I do not want to choose a priority.");
+
+        using var createRequest = NewCustomerRequest(HttpMethod.Post, "/api/tickets", customer.ApplicationUserId!.Value, createTicketRequest);
+        var createResponse = await _client.SendAsync(createRequest);
+
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = await createResponse.Content.ReadFromJsonAsync<TicketResponse>();
+        Assert.NotNull(created);
+        Assert.Equal("Normal", created!.PriorityName);
+    }
+
+    [Fact]
+    public async Task Ticket_CreatedByAgentWithoutPriorityId_ReturnsBadRequest()
+    {
+        var customer = await CreateCustomerAsync("Agent No Priority Customer", "Contoso");
+        var category = await CreateCategoryAsync($"General-{Guid.NewGuid():N}");
+
+        var createTicketRequest = new CreateTicketRequest(
+            customer.ApplicationUserId,
+            category.Id,
+            null,
+            "Need help",
+            "Agent created without priority.");
+
+        using var createRequest = NewAgentRequest(HttpMethod.Post, "/api/tickets", createTicketRequest);
+        var createResponse = await _client.SendAsync(createRequest);
+
+        Assert.Equal(HttpStatusCode.BadRequest, createResponse.StatusCode);
+        var body = await createResponse.Content.ReadAsStringAsync();
+        Assert.Contains("priorityId", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Ticket_CreatedByCustomerWithExplicitPriorityId_IsIgnoredInFavorOfDefault()
+    {
+        var customer = await CreateCustomerAsync("Explicit Priority Customer", "Contoso");
+        var category = await CreateCategoryAsync($"General-{Guid.NewGuid():N}");
+        var attemptedPriority = await CreatePriorityAsync($"Urgent-{Guid.NewGuid():N}", 5);
+
+        var createTicketRequest = new CreateTicketRequest(
+            null,
+            category.Id,
+            attemptedPriority.Id,
+            "Trying to set my own priority",
+            "I would like this marked urgent.");
+
+        using var createRequest = NewCustomerRequest(HttpMethod.Post, "/api/tickets", customer.ApplicationUserId!.Value, createTicketRequest);
+        var createResponse = await _client.SendAsync(createRequest);
+
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = await createResponse.Content.ReadFromJsonAsync<TicketResponse>();
+        Assert.NotNull(created);
+        Assert.NotEqual(attemptedPriority.Id, created!.PriorityId);
+    }
+
+    [Fact]
+    public async Task Ticket_CreatedByCustomer_ReturnsBadRequest_WhenNoActivePrioritiesExist()
+    {
+        var customer = await CreateCustomerAsync("No Active Priority Customer", "Contoso");
+        var category = await CreateCategoryAsync($"General-{Guid.NewGuid():N}");
+
+        var deactivatedIds = await DeactivateAllPrioritiesAsync();
+        try
+        {
+            var createTicketRequest = new CreateTicketRequest(
+                null,
+                category.Id,
+                null,
+                "Need help with nothing active",
+                "No active priority should exist right now.");
+
+            using var createRequest = NewCustomerRequest(HttpMethod.Post, "/api/tickets", customer.ApplicationUserId!.Value, createTicketRequest);
+            var createResponse = await _client.SendAsync(createRequest);
+
+            Assert.Equal(HttpStatusCode.BadRequest, createResponse.StatusCode);
+            var body = await createResponse.Content.ReadAsStringAsync();
+            Assert.Contains("priorityId", body, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            await RestorePrioritiesActiveStateAsync(deactivatedIds);
+        }
+    }
+
+    private async Task<List<Guid>> DeactivateAllPrioritiesAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CustomerManagementDbContext>();
+
+        var activePriorities = await dbContext.TicketPriorities.Where(priority => priority.IsActive).ToListAsync();
+        var activeIds = activePriorities.Select(priority => priority.Id).ToList();
+
+        foreach (var priority in activePriorities)
+        {
+            priority.IsActive = false;
+        }
+
+        await dbContext.SaveChangesAsync();
+        return activeIds;
+    }
+
+    private async Task RestorePrioritiesActiveStateAsync(List<Guid> activeIds)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CustomerManagementDbContext>();
+
+        var priorities = await dbContext.TicketPriorities.Where(priority => activeIds.Contains(priority.Id)).ToListAsync();
+        foreach (var priority in priorities)
+        {
+            priority.IsActive = true;
+        }
+
+        await dbContext.SaveChangesAsync();
+    }
+
     private async Task<CustomerProfileResponse> CreateCustomerAsync(string name, string company)
     {
         var email = $"customer-{Guid.NewGuid():N}@crm.local";
@@ -203,6 +334,20 @@ public sealed class TicketEndpointsTests : IClassFixture<CustomerManagementApiFa
     {
         var request = new HttpRequestMessage(method, uri);
         request.Headers.Add("X-User-Role", "admin");
+
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body);
+        }
+
+        return request;
+    }
+
+    private static HttpRequestMessage NewCustomerRequest(HttpMethod method, string uri, Guid customerUserId, object? body = null)
+    {
+        var request = new HttpRequestMessage(method, uri);
+        request.Headers.Add("X-User-Role", "customer");
+        request.Headers.Add("X-User-Id", customerUserId.ToString());
 
         if (body is not null)
         {

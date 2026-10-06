@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using CustomerManagement.Api.Contracts.TicketMessages;
+using CustomerManagement.Api.Contracts.Tickets;
 using CustomerManagement.Api.Domain.Customers;
 using CustomerManagement.Api.Domain.Dashboard;
 using CustomerManagement.Api.Domain.Security;
@@ -118,16 +119,100 @@ public sealed class TicketMessagesEndpointsTests : IClassFixture<CustomerManagem
     }
 
     [Fact]
-    public async Task CustomerCannotPostMessages_InStory19()
+    public async Task CustomerCanPostMessage_OnOwnOpenTicket_SenderTypeIsCustomer()
     {
         var seeded = await SeedScenarioAsync();
 
-        var createRequest = new CreateTicketMessageRequest(seeded.AgentTicketId, "Customer reply");
+        var createRequest = new CreateTicketMessageRequest(seeded.AgentTicketId, "Here is more detail on my issue.");
         using var request = NewRoleRequest(HttpMethod.Post, "/api/ticket-messages", AuthRoles.Customer, seeded.CustomerOneUserId, createRequest);
 
         var response = await _client.SendAsync(request);
 
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<CreateTicketMessageResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("customer", payload!.Message.SenderType);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CustomerManagementDbContext>();
+        var ticket = await dbContext.Tickets.AsNoTracking().FirstAsync(row => row.Id == seeded.AgentTicketId);
+        Assert.Equal(TicketStatus.InProgress, ticket.Status);
+    }
+
+    [Fact]
+    public async Task CustomerReply_OnResolvedTicket_AutoReopensToInProgress()
+    {
+        var seeded = await SeedScenarioAsync();
+        await SetTicketStatusAsync(seeded.AgentTicketId, TicketStatus.Resolved);
+
+        var createRequest = new CreateTicketMessageRequest(seeded.AgentTicketId, "I am still seeing the issue.");
+        using var request = NewRoleRequest(HttpMethod.Post, "/api/ticket-messages", AuthRoles.Customer, seeded.CustomerOneUserId, createRequest);
+
+        var response = await _client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        using var getRequest = NewRoleRequest(HttpMethod.Get, $"/api/tickets/{seeded.AgentTicketId}", AuthRoles.Customer, seeded.CustomerOneUserId);
+        var getResponse = await _client.SendAsync(getRequest);
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var ticket = await getResponse.Content.ReadFromJsonAsync<TicketResponse>();
+        Assert.NotNull(ticket);
+        Assert.Equal("in_progress", ticket!.Status);
+    }
+
+    [Fact]
+    public async Task CustomerReply_OnWaitingOnCustomerTicket_AutoReopensToInProgress()
+    {
+        var seeded = await SeedScenarioAsync();
+        await SetTicketStatusAsync(seeded.AgentTicketId, TicketStatus.WaitingOnCustomer);
+
+        var createRequest = new CreateTicketMessageRequest(seeded.AgentTicketId, "Here is the information you asked for.");
+        using var request = NewRoleRequest(HttpMethod.Post, "/api/ticket-messages", AuthRoles.Customer, seeded.CustomerOneUserId, createRequest);
+
+        var response = await _client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        using var getRequest = NewRoleRequest(HttpMethod.Get, $"/api/tickets/{seeded.AgentTicketId}", AuthRoles.Customer, seeded.CustomerOneUserId);
+        var getResponse = await _client.SendAsync(getRequest);
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var ticket = await getResponse.Content.ReadFromJsonAsync<TicketResponse>();
+        Assert.NotNull(ticket);
+        Assert.Equal("in_progress", ticket!.Status);
+    }
+
+    [Fact]
+    public async Task CustomerReply_OnClosedTicket_ReturnsBadRequest_AndDoesNotPersistMessage()
+    {
+        var seeded = await SeedScenarioAsync();
+        await SetTicketStatusAsync(seeded.AgentTicketId, TicketStatus.Closed);
+
+        var createRequest = new CreateTicketMessageRequest(seeded.AgentTicketId, "Trying to reply anyway.");
+        using var request = NewRoleRequest(HttpMethod.Post, "/api/ticket-messages", AuthRoles.Customer, seeded.CustomerOneUserId, createRequest);
+
+        var response = await _client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CustomerManagementDbContext>();
+
+        var ticket = await dbContext.Tickets.AsNoTracking().FirstAsync(row => row.Id == seeded.AgentTicketId);
+        Assert.Equal(TicketStatus.Closed, ticket.Status);
+
+        var messageCount = await dbContext.TicketMessages.CountAsync(row => row.TicketId == seeded.AgentTicketId);
+        Assert.Equal(0, messageCount);
+    }
+
+    [Fact]
+    public async Task CustomerReply_OnAnotherCustomersTicket_ReturnsNotFound()
+    {
+        var seeded = await SeedScenarioAsync();
+
+        var createRequest = new CreateTicketMessageRequest(seeded.OtherAgentTicketId, "Trying to reply to someone else's ticket.");
+        using var request = NewRoleRequest(HttpMethod.Post, "/api/ticket-messages", AuthRoles.Customer, seeded.CustomerOneUserId, createRequest);
+
+        var response = await _client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
@@ -152,6 +237,16 @@ public sealed class TicketMessagesEndpointsTests : IClassFixture<CustomerManagem
         Assert.Equal(1, payload!.TotalCount);
         Assert.Single(payload.Items);
         Assert.Equal("Initial ticket description", payload.Items[0].Body);
+    }
+
+    private async Task SetTicketStatusAsync(Guid ticketId, TicketStatus status)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CustomerManagementDbContext>();
+
+        var ticket = await dbContext.Tickets.FirstAsync(row => row.Id == ticketId);
+        ticket.Status = status;
+        await dbContext.SaveChangesAsync();
     }
 
     private async Task<SeededScenario> SeedScenarioAsync()

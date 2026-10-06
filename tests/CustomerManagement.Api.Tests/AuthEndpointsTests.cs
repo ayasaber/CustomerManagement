@@ -31,6 +31,20 @@ public sealed class AuthEndpointsTests : IClassFixture<CustomerManagementApiFact
     }
 
     [Fact]
+    public async Task Register_ReturnsCustomerPermissions_IncludingTicketMessagesWrite()
+    {
+        var request = NewRegisterRequest($"customer-perm-{Guid.NewGuid():N}@crm.local", "customer");
+
+        var response = await _client.PostAsJsonAsync("/api/auth/register", request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<TokenResponse>();
+        Assert.NotNull(payload);
+        Assert.Contains("customer", payload!.Roles, StringComparer.OrdinalIgnoreCase);
+        Assert.Contains("ticket-messages.write", payload.Permissions, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Register_ReturnsConflict_WhenEmailAlreadyExists()
     {
         var email = $"dup-{Guid.NewGuid():N}@crm.local";

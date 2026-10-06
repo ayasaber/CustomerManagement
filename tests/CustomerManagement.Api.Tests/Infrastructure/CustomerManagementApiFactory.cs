@@ -18,6 +18,9 @@ public sealed class CustomerManagementApiFactory : WebApplicationFactory<Program
         Path.GetTempPath(),
         $"crm-attachments-integration-{Guid.NewGuid():N}");
 
+    /// <summary>Exposes the shared in-memory database name so tests can register additional DbContext configuration against the same data.</summary>
+    public string DatabaseName => _databaseName;
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>

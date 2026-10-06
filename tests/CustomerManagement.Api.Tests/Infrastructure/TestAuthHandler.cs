@@ -105,7 +105,8 @@ public sealed class TestAuthHandler(
                 Permissions.TicketsRead,
                 Permissions.TicketsWrite,
                 Permissions.TicketsClose,
-                Permissions.TicketMessagesRead
+                Permissions.TicketMessagesRead,
+                Permissions.TicketMessagesWrite
             ],
             _ => []
         };
