@@ -134,12 +134,12 @@ in this repo, not just the final code.
 
 ### Verification
 Backend:
-| Command | Result | Evidence |
-|---|---|---|
-| dotnet build ... | Passed | ... |
-| dotnet test ... | Passed | ... |
-| ng build | Passed | ... |
-| ng test ... | Passed | ... |
+| Command | Result |
+|---|---|
+| dotnet build ... | Passed | 
+| dotnet test ... | Passed | 
+| ng build | Passed | 
+| ng test ... | Passed |
 
 Frontend:
 cd src/CustomerManagement.Ui
