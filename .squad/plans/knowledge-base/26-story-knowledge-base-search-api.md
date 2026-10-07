@@ -146,10 +146,26 @@ public static class KnowledgeBaseSearchEndpoints
 ---
 ## Review — completed 2026-10-07
 
-- [x] KnowledgeBaseSearchContracts.cs, KnowledgeBaseSearchEndpoints.cs, Permissions.cs, IdentitySeedData.cs, Program.cs registration: added. No EF migration needed (read-only across existing tables + runtime permission seeding, no schema change).
-- [x] Implementation deviation from the plan's `EF.Functions.Like` + `terms.Any(...)` sketch: implemented as `Where(entry => entry.IsActive)` at the DB level (fully translatable) followed by in-memory term-matching/scoring after `ToListAsync()`, to sidestep any SQL-translation uncertainty around a dynamic `List<string>.Any(predicate)` inside a `Where` clause. Functionally equivalent (match-any-term, case-insensitive, title 3x/body 1x weighting, top-50 cap) and fully covered by the Test Plan.
-- [x] KnowledgeBaseSearchEndpointsTests.cs — all 6 Test Plan cases (all three content types returned with correct `ContentType`/snippet, retired content excluded for all three roles, body-only FAQ match scored lower via `IndexOf` ordering, empty query → empty results, no-match query → empty results, all three roles succeed) + permission-seeding test: added, passing
-- [x] TestAuthHandler.cs updated with `knowledge-base.search` for admin/agent/customer
-- [x] Full regression: `dotnet test CustomerSupportCRM.slnx` → 244/244 passing (233 pre-existing + 11 new) — solution-wide total: 185 `CustomerManagement.Api.Tests` + 59 `CustomerManagement.Gateway.Tests` (Gateway untouched by this story). Note for the next story's reviewer: if you report API and Gateway counts separately instead of this combined total, say so explicitly — Story 27's review didn't, which made its correct "185/185 API" read as a 59-test regression from this line's "244/244" until traced back to this breakdown.
+### Implementation Review
+
+- [x] `KnowledgeBaseSearchContracts.cs`, `KnowledgeBaseSearchEndpoints.cs`, `Permissions.cs`, `IdentitySeedData.cs`, `Program.cs` registration. No EF migration needed (read-only across existing tables + runtime permission seeding, no schema change)
+- [x] Implementation deviation from the plan's `EF.Functions.Like` + `terms.Any(...)` sketch: implemented as `Where(entry => entry.IsActive)` at the DB level (fully translatable) followed by in-memory term-matching/scoring after `ToListAsync()`, to sidestep SQL-translation uncertainty around a dynamic `List<string>.Any(predicate)` inside a `Where` clause. Functionally equivalent (match-any-term, case-insensitive, title 3x/body 1x weighting, top-50 cap) and fully covered by the Test Plan
+- [x] `knowledge-base.search` permission seeded for admin/agent/customer
+
+### Test Coverage
+
+- [x] KnowledgeBaseSearchEndpointsTests.cs — all 6 Test Plan cases (all three content types returned with correct `ContentType`/snippet, retired content excluded for all three roles, body-only FAQ match scored lower via `IndexOf` ordering, empty query → empty results, no-match query → empty results, all three roles succeed) + permission-seeding test
+- [x] `TestAuthHandler.cs` updated with `knowledge-base.search` for admin/agent/customer
+
+### Verification
+
+| Command | Result | Evidence |
+|---|---|---|
+| `dotnet build CustomerSupportCRM.slnx` | Passed | 0 warnings, 0 errors (re-verified 2026-10-07) |
+| `dotnet test CustomerSupportCRM.slnx` (as originally recorded) | Passed | 244/244 passing (233 pre-existing + 11 new) — solution-wide total: 185 `CustomerManagement.Api.Tests` + 59 `CustomerManagement.Gateway.Tests` (Gateway untouched by this story) |
+| `dotnet test tests/CustomerManagement.Api.Tests/CustomerManagement.Api.Tests.csproj` (current) | Passed | 185/185 passing today — unchanged since this story; Story 27 only fixed 3 existing assertion lines in `KnowledgeBaseSearchEndpointsTests.cs`, adding/removing none (re-verified 2026-10-07) |
+| `ng build` / `ng test` | N/A | This story is API-only; the shared `/knowledge-base` browse/search page is built in Story 27 |
+
+> Note preserved for the next reviewer: the "244/244" above is a combined API+Gateway solution total, not an API-only count. Story 27's "185/185 API" is consistent with this story's own 185 API tests — see Story 27's Verification table for the full reconciliation.
 
 **STOP HERE. Report to the user and wait for confirmation before proceeding to Story 27.**

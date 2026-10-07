@@ -1,7 +1,7 @@
 version: 1
 project:
   name: Customer Support CRM
-  primaryLanguage: typescript
+  primaryLanguage: csharp
   projectRoots:
     - .
 tracker:

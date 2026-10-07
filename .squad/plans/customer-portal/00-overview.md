@@ -29,6 +29,19 @@ Entry point for the **customer-portal** feature. Stories execute in order by the
 * [Story 22 — Customer Feedback API](22-story-customer-feedback-api.md)
 * [Story 23 — Customer Portal UI and Gateway Routing](23-story-customer-portal-ui-and-gateway-routing.md)
 
+
+## Requirements Decisions
+
+The following open questions from the original intake were resolved during
+planning:
+
+| Question | Decision | Story |
+|---|---|---|
+| Reply after Resolved | Allowed and automatically reopens to InProgress | 20 |
+| Reply after Closed | Not allowed | 20 |
+| Customer chooses priority | No; server assigns default | 20 |
+| Feedback identity | Always tied to logged-in customer | 22 |
+
 ## API Contract and Implementation
 
 * [Gateway API Route Contract](../../../src/CustomerManagement.Gateway/ROUTES.md)
@@ -47,3 +60,44 @@ Entry point for the **customer-portal** feature. Stories execute in order by the
 * [Gateway Test Project](../../../tests/CustomerManagement.Gateway.Tests/CustomerManagement.Gateway.Tests.csproj)
 * [Gateway Route Contract Tests](../../../tests/CustomerManagement.Gateway.Tests/GatewayRouteContractTests.cs)
 * [Ticket Conversation API Tests](../../../tests/CustomerManagement.Api.Tests/TicketMessagesEndpointsTests.cs)
+
+
+## End-to-End Verification
+
+Scenario: Customer submits and follows a support request.
+
+1. Login as Customer A.
+2. Open `/customer/portal`.
+3. Create ticket.
+4. Verify ticket appears under My Requests.
+5. Open ticket.
+6. Add reply.
+7. Verify conversation contains customer message.
+8. Login as Customer B.
+9. Verify Customer A's ticket is not visible.
+10. Attempt direct access using Customer A ticket ID.
+11. Verify API returns 404.
+
+
+Result: Passed
+Date: 2026-10-07
+
+
+### Security Verification
+
+Customer data isolation was explicitly verified at the API boundary:
+
+- List operations are customer-scoped.
+- Direct ticket access is ownership-scoped.
+- Direct message access is ownership-scoped.
+- Attachment operations use the same ownership scope.
+- Cross-customer access returns 404.
+- Customer-only UI route is guarded separately.
+
+
+## Current Status
+
+- **Implementation:** Implemented
+- **Verification:** Verified
+- **Review:** Completed 2026-10-07
+- **Outstanding Issues:** None

@@ -207,10 +207,25 @@ public static class GuideEndpoints
 ---
 ## Review — completed 2026-10-07
 
-- [x] Guide/GuideStep entities, contracts, endpoints, DbContext wiring (cascade-delete FK, unique `(GuideId, StepNumber)` index), Permissions.cs, IdentitySeedData.cs, Program.cs registration, EF migration (`Story25SolutionsGuidesApi`): added
-- [x] Implementation deviation from the plan's `UpdateAsync` sketch: loading the guide via `.Include(g => g.Steps)` and reassigning `entry.Steps` to a new list (as originally sketched) triggered a spurious `DbUpdateConcurrencyException` ("entity does not exist in the store") against the EF Core InMemory provider specifically on the parent `Guide` row's concurrency check, reproducible on every update. Fixed by loading the `Guide` without `Include`, querying/removing existing `GuideStep` rows separately by `GuideId`, and `AddRange`-ing new ones with `GuideId` set explicitly (no navigation-fixup reliance) — same RowVersion-`OriginalValue` mechanism as `FaqEndpoints`/`HelpArticleEndpoints` otherwise.
-- [x] GuideEndpointsTests.cs — all 10 Test Plan cases (admin create with ordered steps 201, non-admin create/update 403, empty steps list 400, customer list active-only even with `activeOnly=false`, agent/admin list active+retired, update replaces step list without merging, admin retire removes entry from customer list, stale RowVersion 409, unknown id 404, missing title / too-long step / too-many-steps validation) + permission-seeding test: added, passing
-- [x] TestAuthHandler.cs updated with `guides.read` (admin/agent/customer) and `guides.manage` (admin only)
-- [x] Full regression: `dotnet test CustomerSupportCRM.slnx` → 233/233 passing (216 pre-existing + 17 new) — solution-wide total: 174 `CustomerManagement.Api.Tests` + 59 `CustomerManagement.Gateway.Tests` (Gateway untouched by this story)
+### Implementation Review
+
+- [x] `Guide`/`GuideStep` entities, contracts, endpoints, `DbContext` wiring (cascade-delete FK, unique `(GuideId, StepNumber)` index), `Permissions.cs`, `IdentitySeedData.cs`, `Program.cs` registration, EF migration (`Story25SolutionsGuidesApi`)
+- [x] Implementation deviation from the plan's `UpdateAsync` sketch: loading the guide via `.Include(g => g.Steps)` and reassigning `entry.Steps` to a new list triggered a spurious `DbUpdateConcurrencyException` against the EF Core InMemory provider on the parent `Guide` row's concurrency check, reproducible on every update. Fixed by loading the `Guide` without `Include`, removing existing `GuideStep` rows separately by `GuideId`, and `AddRange`-ing new ones with `GuideId` set explicitly (no navigation-fixup reliance) — same RowVersion-`OriginalValue` mechanism as `FaqEndpoints`/`HelpArticleEndpoints` otherwise
+- [x] Customer list enforces active-only regardless of `activeOnly=false`; agent/admin list supports active+retired; update replaces the step list wholesale (no merge)
+- [x] `guides.read` (admin/agent/customer) and `guides.manage` (admin-only) permissions seeded
+
+### Test Coverage
+
+- [x] GuideEndpointsTests.cs — all 10 Test Plan cases (admin create with ordered steps 201, non-admin create/update 403, empty steps list 400, customer list active-only even with `activeOnly=false`, agent/admin list active+retired, update replaces step list without merging, admin retire removes entry from customer list, stale RowVersion 409, unknown id 404, missing title / too-long step / too-many-steps validation) + permission-seeding test
+- [x] `TestAuthHandler.cs` updated with `guides.read` (admin/agent/customer) and `guides.manage` (admin-only)
+
+### Verification
+
+| Command | Result | Evidence |
+|---|---|---|
+| `dotnet build CustomerSupportCRM.slnx` | Passed | 0 warnings, 0 errors (re-verified 2026-10-07) |
+| `dotnet test CustomerSupportCRM.slnx` (as originally recorded) | Passed | 233/233 passing (216 pre-existing + 17 new) — solution-wide total: 174 `CustomerManagement.Api.Tests` + 59 `CustomerManagement.Gateway.Tests` (Gateway untouched by this story) |
+| `dotnet test tests/CustomerManagement.Api.Tests/CustomerManagement.Api.Tests.csproj` (current) | Passed | 185/185 passing today, since Stories 26–27 added more API tests on top of this story's 174 (re-verified 2026-10-07) |
+| `ng build` / `ng test` | N/A | This story is API-only; the admin Guides page is built in Story 27 |
 
 **STOP HERE. Report to the user and wait for confirmation before proceeding to Story 26.**

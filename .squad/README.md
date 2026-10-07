@@ -3,7 +3,7 @@
 This folder is managed by [squad-kit](https://github.com/AzmSquad/squad-kit).
 
 - **Project:** Customer Support CRM
-- **Language:** typescript
+- **Language:** csharp
 - **Tracker:** none
 
 ## Workflow

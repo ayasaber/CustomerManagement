@@ -202,7 +202,23 @@ Register `app.MapFaqEndpoints();` in `src/CustomerManagement.Api/Program.cs` nex
 ---
 ## Review — completed 2026-10-07
 
-- [x] FaqEndpointsTests.cs — all 8 Test Plan cases (admin create 201, non-admin create/update 403, customer list active-only even with `activeOnly=false`, agent/admin list active+retired, admin retire removes entry from customer list, stale RowVersion 409, unknown id 404, missing/too-long field validation): added, passing
-- [x] Permission seeding — `faq.read` confirmed for admin/agent/customer, `faq.manage` confirmed admin-only: added, passing
+### Implementation Review
+
+- [x] `FaqEntry` CRUD endpoints — admin create/update/retire
+- [x] Customer list enforces active-only regardless of an `activeOnly=false` override; agent/admin list supports active+retired
+- [x] `faq.read` (admin/agent/customer) and `faq.manage` (admin-only) permissions seeded
+
+### Test Coverage
+
+- [x] FaqEndpointsTests.cs — all 8 Test Plan cases (admin create 201, non-admin create/update 403, customer list active-only even with `activeOnly=false`, agent/admin list active+retired, admin retire removes entry from customer list, stale RowVersion 409, unknown id 404, missing/too-long field validation)
+- [x] Permission seeding — `faq.read` confirmed for admin/agent/customer, `faq.manage` confirmed admin-only
+
+### Verification
+
+| Command | Result | Evidence |
+|---|---|---|
+| `dotnet build CustomerSupportCRM.slnx` | Passed | 0 warnings, 0 errors (re-verified 2026-10-07) |
+| `dotnet test tests/CustomerManagement.Api.Tests/CustomerManagement.Api.Tests.csproj` | Passed | 185/185 passing, including `FaqEndpointsTests.cs` (re-verified 2026-10-07) |
+| `ng build` / `ng test` | N/A | This story is API-only; the customer FAQ browse UI and admin FAQ page are built in Story 23 |
 
 **STOP HERE. Report to the user and wait for confirmation before proceeding to Story 22.**

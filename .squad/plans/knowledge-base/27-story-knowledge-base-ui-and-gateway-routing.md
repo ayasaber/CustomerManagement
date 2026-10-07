@@ -196,10 +196,27 @@ File: `src/CustomerManagement.Ui/src/app/app.routes.ts`
 ---
 ## Review — completed 2026-10-07
 
-- [x] Gateway: ocelot.json (5 new routes), ROUTES.md (3 new contract sections), GatewayRouteContractTests.cs (52→57 + helpArticleRoutes/guideRoutes/knowledgeBaseSearchRoutes assertions), CustomerManagementGatewayFactory.cs (42→47), CustomerManagementGatewayRoutingTests.cs (7 new InlineData cases + permissions), DownstreamStubServer.cs (3 new stub route groups + permission resolution): added, passing
-- [x] Bug found and fixed during implementation: `KnowledgeBaseSearchResultResponse.ContentType` was typed as the `KnowledgeBaseContentType` C# enum in Story 26, which System.Text.Json serializes as a raw integer (0/1/2) by default — this codebase's established convention (seen in `TicketResponse.Status`) is to expose enums as `string` via `.ToString()` at the endpoint boundary instead. Fixed `KnowledgeBaseSearchContracts.cs`/`KnowledgeBaseSearchEndpoints.cs` accordingly (and the Story 26 test assertions) so the Angular `KnowledgeBaseContentType` string-literal union type actually matches the wire format; caught before this story's frontend consumed it.
-- [x] Frontend: help-article.models.ts, guide.models.ts, knowledge-base-search.models.ts, help-articles-api.service.ts, guides-api.service.ts, knowledge-base-search-api.service.ts, admin-help-articles-page.component.ts, admin-guides-page.component.ts (repeatable FormArray steps input), admin-shell.component.ts nav links, knowledge-base-page.component.ts (shared browse/search page), app.routes.ts (`/admin/help-articles`, `/admin/guides`, `/knowledge-base`): added
-- [x] Implementation note: the search box submits explicitly (Enter/button), not on debounced input-as-you-type, to keep behavior deterministic and testable; this is a reasonable simplification of the plan's "on input (debounced) or explicit submit" wording.
-- [x] Test Plan — help-articles-api.service.spec.ts, guides-api.service.spec.ts, knowledge-base-search-api.service.spec.ts, admin-help-articles-page.component.spec.ts, admin-guides-page.component.spec.ts, knowledge-base-page.component.spec.ts (default browse lists, content-type badges per result, empty-results state, guide step expansion): added, passing
-- [x] Full regression: `dotnet test CustomerSupportCRM.slnx` → 185/185 API + 66/66 Gateway passing (251/251 combined); `ng test --watch=false --browsers=ChromeHeadless` → 84/84 passing (60 pre-existing + 24 new)
-- [x] Reconciling this with Story 26's "244/244": that figure was the combined API+Gateway solution total (185 API + 59 Gateway, per Story 26's own breakdown), not an API-only count. This story's combined total is 251/251 (244 pre-existing + 7 new Gateway tests, 0 new API tests — Story 26's assertion fix in `KnowledgeBaseSearchEndpointsTests.cs` edited existing lines, it didn't add or remove a test). No tests were lost between Story 26 and this story.
+### Implementation Review
+
+- [x] Gateway — `ocelot.json` (5 new routes), `ROUTES.md` (3 new contract sections), `GatewayRouteContractTests.cs` (52→57 + `helpArticleRoutes`/`guideRoutes`/`knowledgeBaseSearchRoutes` assertions), `CustomerManagementGatewayFactory.cs` (42→47), `CustomerManagementGatewayRoutingTests.cs` (7 new `InlineData` cases + permissions), `DownstreamStubServer.cs` (3 new stub route groups + permission resolution)
+- [x] Bug found and fixed during implementation: `KnowledgeBaseSearchResultResponse.ContentType` was typed as the `KnowledgeBaseContentType` C# enum in Story 26, which System.Text.Json serializes as a raw integer by default — this codebase's convention (seen in `TicketResponse.Status`) is `string` via `.ToString()` at the endpoint boundary. Fixed `KnowledgeBaseSearchContracts.cs`/`KnowledgeBaseSearchEndpoints.cs` (and the Story 26 test assertions) so the Angular string-literal union type matches the wire format
+- [x] Frontend — `help-article.models.ts`, `guide.models.ts`, `knowledge-base-search.models.ts`, `help-articles-api.service.ts`, `guides-api.service.ts`, `knowledge-base-search-api.service.ts`, `admin-help-articles-page.component.ts`, `admin-guides-page.component.ts` (repeatable FormArray steps input), `admin-shell.component.ts` nav links, `knowledge-base-page.component.ts` (shared browse/search page), `app.routes.ts` (`/admin/help-articles`, `/admin/guides`, `/knowledge-base`)
+- [x] Implementation note: the search box submits explicitly (Enter/button), not on debounced input-as-you-type, to keep behavior deterministic and testable — a reasonable simplification of the plan's "on input (debounced) or explicit submit" wording
+
+### Test Coverage
+
+- [x] `help-articles-api.service.spec.ts`, `guides-api.service.spec.ts`, `knowledge-base-search-api.service.spec.ts`
+- [x] `admin-help-articles-page.component.spec.ts`, `admin-guides-page.component.spec.ts`
+- [x] `knowledge-base-page.component.spec.ts` (default browse lists, content-type badges per result, empty-results state, guide step expansion)
+
+### Verification
+
+| Command | Result | Evidence |
+|---|---|---|
+| `dotnet build CustomerSupportCRM.slnx` | Passed | 0 warnings, 0 errors (re-verified 2026-10-07) |
+| `dotnet test tests/CustomerManagement.Api.Tests/CustomerManagement.Api.Tests.csproj` | Passed | 185/185 passing — unchanged from Story 26 (this story only fixed 3 existing assertion lines, adding/removing no tests) |
+| `dotnet test tests/CustomerManagement.Gateway.Tests/CustomerManagement.Gateway.Tests.csproj` | Passed | 66/66 passing (59 pre-existing + 7 new routes) |
+| `ng build` | Passed | 0 errors |
+| `ng test --watch=false --browsers=ChromeHeadless` | Passed | 84/84 passing (60 pre-existing + 24 new) |
+
+Combined solution total: 251/251 (244 pre-existing + 7 new Gateway tests). Reconciling with Story 26's "244/244": that figure was Story 26's own combined API+Gateway total (185 API + 59 Gateway), not an API-only count — this story's "185/185 API" is consistent with it, not a regression. No tests were lost between Story 26 and this story.

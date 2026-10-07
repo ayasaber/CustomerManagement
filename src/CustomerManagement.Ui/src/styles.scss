@@ -29,7 +29,8 @@ h1, h2, h3, h4 {
   color: var(--color-primary-dark);
 }
 
-/* Shared "pill" nav used by the top-level app headers (customer portal, agent dashboard) */
+/* Shared "pill" nav for in-page section tabs (customer portal, agent dashboard) —
+   matches app.scss's .app-shell__nav look so the top nav and in-page nav read as one language */
 .app-nav {
   display: flex;
   gap: 0.5rem;
@@ -40,26 +41,30 @@ h1, h2, h3, h4 {
 .app-nav button {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--color-border);
-  background: #f4f9ff;
-  color: var(--color-primary-dark);
-  border-radius: var(--radius-md);
-  padding: 0.5rem 0.9rem;
+  border: none;
+  background: transparent;
+  color: #19456f;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
   font: inherit;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .app-nav a:hover,
 .app-nav button:hover {
-  border-color: var(--color-primary);
+  background: #eef5fd;
 }
 
 .app-nav a.active,
 .app-nav button.active {
-  background: var(--color-primary-gradient);
-  color: #fff;
-  border-color: transparent;
+  background: #d8e9fb;
+  color: #0f3760;
+}
+
+.app-nav button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

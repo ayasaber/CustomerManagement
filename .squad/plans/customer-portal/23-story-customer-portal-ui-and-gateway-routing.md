@@ -313,11 +313,32 @@ Isolation requirement: this component must not import or link to anything under 
 ---
 ## Review — completed 2026-10-07
 
-- [x] Gateway Tasks — ocelot.json routes, ROUTES.md, GatewayRouteContractTests.cs, CustomerManagementGatewayFactory.cs, CustomerManagementGatewayRoutingTests.cs, DownstreamStubServer.cs updated for the 5 new routes: added, passing
-- [x] customer-only.guard.spec.ts: added, passing
-- [x] ticket-management-api.service.spec.ts (new file — attachment methods + optional priorityId): added, passing
-- [x] faq-api.service.spec.ts: added, passing
-- [x] feedback-api.service.spec.ts: added, passing
-- [x] customer-portal-page.component.spec.ts (My Requests render, New Request form/no-priority-control, conversation panel canCompose, FAQ grouping/empty state, feedback rating required): added, passing
-- [x] admin-faq-page.component.spec.ts (render, create, retire toggle): added, passing
+### Implementation Review
+
+- [x] Customer-only authorization — `customerOnlyGuard` restricts `/customer/portal` to the `customer` role
+- [x] Customer ticket ownership — My Requests list, new-request form (no priority control), ticket conversation panel, attachment upload, all scoped to the signed-in customer's own tickets
+- [x] FAQ integration — customer FAQ browse section grouped by topic, admin FAQ management page (`/admin/faq`)
+- [x] Feedback integration — customer feedback submission form (rating + optional comment)
+- [x] Gateway routes — 5 new routes registered for the Story 20–22 endpoints, documented in `ROUTES.md`
+- [x] Attachment handling — `ticket-management-api.service.ts` attachment methods plus optional `priorityId` on ticket creation
+
+### Test Coverage
+
+- [x] Customer portal component tests — `customer-portal-page.component.spec.ts` (My Requests render, New Request form/no-priority-control, conversation panel `canCompose`, FAQ grouping/empty state, feedback rating required)
+- [x] FAQ API tests — `faq-api.service.spec.ts`
+- [x] Feedback API tests — `feedback-api.service.spec.ts`
+- [x] Attachment API tests — `ticket-management-api.service.spec.ts` (new file — attachment methods + optional `priorityId`)
+- [x] Gateway routing tests — `GatewayRouteContractTests.cs`, `CustomerManagementGatewayFactory.cs`, `CustomerManagementGatewayRoutingTests.cs`, `DownstreamStubServer.cs` updated for the 5 new routes
+- [x] `customer-only.guard.spec.ts`
+- [x] `admin-faq-page.component.spec.ts` (render, create, retire toggle)
+
+### Verification
+
+| Command | Result | Evidence |
+|---|---|---|
+| `dotnet build CustomerSupportCRM.slnx` | Passed | 0 warnings, 0 errors (re-verified 2026-10-07) |
+| `dotnet test tests/CustomerManagement.Api.Tests/CustomerManagement.Api.Tests.csproj` | Passed | 185/185 passing (re-verified 2026-10-07) |
+| `dotnet test tests/CustomerManagement.Gateway.Tests/CustomerManagement.Gateway.Tests.csproj` | Passed | 66/66 passing, including the 5 routes added by this story (re-verified 2026-10-07) |
+| `ng build` | Passed | 0 errors (re-verified 2026-10-07) |
+| `ng test --watch=false --browsers=ChromeHeadless` | Passed | 84/84 passing (re-verified 2026-10-07) |
 

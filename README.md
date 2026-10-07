@@ -111,3 +111,38 @@ in this repo, not just the final code.
 - Tests: one `*EndpointsTests.cs` file per endpoint group under
   `tests/CustomerManagement.Api.Tests`, using `CustomerManagementApiFactory`
   and `TestAuthHandler` to simulate a logged-in role without a real token.
+
+
+  ## Review — completed 2026-10-07
+
+### Implementation Review
+
+- [x] Customer-only authorization
+- [x] Customer ticket ownership
+- [x] FAQ integration
+- [x] Feedback integration
+- [x] Gateway routes
+- [x] Attachment handling
+
+### Test Coverage
+
+- [x] Customer portal component tests
+- [x] FAQ API tests
+- [x] Feedback API tests
+- [x] Attachment API tests
+- [x] Gateway routing tests
+
+### Verification
+Backend:
+| Command | Result | Evidence |
+|---|---|---|
+| dotnet build ... | Passed | ... |
+| dotnet test ... | Passed | ... |
+| ng build | Passed | ... |
+| ng test ... | Passed | ... |
+
+Frontend:
+cd src/CustomerManagement.Ui
+npm ci
+npm run build
+npm test -- --watch=false --browsers=ChromeHeadless

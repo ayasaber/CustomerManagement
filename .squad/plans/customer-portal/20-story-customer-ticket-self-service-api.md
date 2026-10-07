@@ -309,9 +309,27 @@ File: `src/CustomerManagement.Api/Infrastructure/Auth/IdentitySeedData.cs`
 ---
 ## Review — completed 2026-10-07
 
-- [x] TicketEndpointsTests.cs — priority default/ignored/no-active-priority cases: added, passing
-- [x] TicketAttachmentEndpointsTests.cs — all 7 ownership/validation/cleanup scenarios: added, passing
-- [x] TicketMessagesEndpointsTests.cs — customer reply + auto-reopen + closed-ticket-blocked cases: added, passing
-- [x] Permission seeding — ticket-messages.write confirmed for Customer role (AuthEndpointsTests.cs): added, passing
+### Implementation Review
+
+- [x] Optional ticket priority for customer-submitted tickets, server-resolved default (`ResolveDefaultPriorityIdAsync`); agent/admin creation still requires an explicit `priorityId`
+- [x] Ticket attachment upload/list/content-download endpoints (`TicketAttachmentEndpoints`), reusing `IAttachmentStorage` and the same ownership scoping as `TicketEndpoints`/`TicketMessagesEndpoints`
+- [x] Customer replies enabled on `TicketMessagesEndpoints.CreateAsync` (previously agent/admin-only)
+- [x] Auto-reopen on customer reply: `Resolved`/`WaitingOnCustomer` → `InProgress`; reply on `Closed` blocked with `400`
+- [x] `ticket-messages.write` permission extended to the `Customer` role
+
+### Test Coverage
+
+- [x] TicketEndpointsTests.cs — priority default/ignored/no-active-priority cases
+- [x] TicketAttachmentEndpointsTests.cs — all 7 ownership/validation/cleanup scenarios
+- [x] TicketMessagesEndpointsTests.cs — customer reply + auto-reopen + closed-ticket-blocked cases
+- [x] Permission seeding — `ticket-messages.write` confirmed for `Customer` role (`AuthEndpointsTests.cs`)
+
+### Verification
+
+| Command | Result | Evidence |
+|---|---|---|
+| `dotnet build CustomerSupportCRM.slnx` | Passed | 0 warnings, 0 errors (re-verified 2026-10-07) |
+| `dotnet test tests/CustomerManagement.Api.Tests/CustomerManagement.Api.Tests.csproj` | Passed | 185/185 passing, including this story's `TicketEndpointsTests.cs`/`TicketAttachmentEndpointsTests.cs`/`TicketMessagesEndpointsTests.cs` additions (re-verified 2026-10-07) |
+| `ng build` / `ng test` | N/A | This story is API-only; UI consumption of these endpoints is covered by Story 23 |
 
 **STOP HERE. Report to the user and wait for confirmation before proceeding to Story 21.**

@@ -191,9 +191,24 @@ public static class HelpArticleEndpoints
 ---
 ## Review — completed 2026-10-07
 
-- [x] HelpArticle entity, contracts, endpoints, DbContext wiring, Permissions.cs, IdentitySeedData.cs, Program.cs registration, EF migration (`Story24HelpArticlesApi`): added
-- [x] HelpArticleEndpointsTests.cs — all 8 Test Plan cases (admin create 201, non-admin create/update 403, customer list active-only even with `activeOnly=false`, agent/admin list active+retired, admin retire removes entry from customer list, stale RowVersion 409, unknown id 404, missing/too-long field validation) + permission-seeding test: added, passing
-- [x] TestAuthHandler.cs updated with `help-articles.read` (admin/agent/customer) and `help-articles.manage` (admin only)
-- [x] Full regression: `dotnet test CustomerSupportCRM.slnx` → 216/216 passing (200 pre-existing + 16 new) — solution-wide total: 157 `CustomerManagement.Api.Tests` + 59 `CustomerManagement.Gateway.Tests`
+### Implementation Review
+
+- [x] `HelpArticle` entity, contracts, endpoints, `DbContext` wiring, `Permissions.cs`, `IdentitySeedData.cs`, `Program.cs` registration, EF migration (`Story24HelpArticlesApi`)
+- [x] Customer list enforces active-only regardless of `activeOnly=false`, mirroring `FaqEndpoints`; agent/admin list supports active+retired
+- [x] `help-articles.read` (admin/agent/customer) and `help-articles.manage` (admin-only) permissions seeded
+
+### Test Coverage
+
+- [x] HelpArticleEndpointsTests.cs — all 8 Test Plan cases (admin create 201, non-admin create/update 403, customer list active-only even with `activeOnly=false`, agent/admin list active+retired, admin retire removes entry from customer list, stale RowVersion 409, unknown id 404, missing/too-long field validation) + permission-seeding test
+- [x] `TestAuthHandler.cs` updated with `help-articles.read` (admin/agent/customer) and `help-articles.manage` (admin-only)
+
+### Verification
+
+| Command | Result | Evidence |
+|---|---|---|
+| `dotnet build CustomerSupportCRM.slnx` | Passed | 0 warnings, 0 errors (re-verified 2026-10-07) |
+| `dotnet test CustomerSupportCRM.slnx` (as originally recorded) | Passed | 216/216 passing (200 pre-existing + 16 new) — solution-wide total: 157 `CustomerManagement.Api.Tests` + 59 `CustomerManagement.Gateway.Tests` |
+| `dotnet test tests/CustomerManagement.Api.Tests/CustomerManagement.Api.Tests.csproj` (current) | Passed | 185/185 passing today, since Stories 25–27 added more API tests on top of this story's 157 (re-verified 2026-10-07) |
+| `ng build` / `ng test` | N/A | This story is API-only; the admin Help Articles page is built in Story 27 |
 
 **STOP HERE. Report to the user and wait for confirmation before proceeding to Story 25.**

@@ -179,7 +179,23 @@ Register `app.MapFeedbackEndpoints();` in `src/CustomerManagement.Api/Program.cs
 ---
 ## Review — completed 2026-10-07
 
-- [x] FeedbackEndpointsTests.cs — all 8 Test Plan cases (submit with rating+comment 201 w/ resolved CustomerName, rating-only 201 w/ null Comment, rating out of range 400, comment too long 400, agent/admin submit 403, customer list 403, admin/agent list paginated newest-first, invalid paging 400): added, passing
-- [x] Permission seeding — `feedback.submit` confirmed customer-only, `feedback.read` confirmed admin/agent-only: added, passing
+### Implementation Review
+
+- [x] Feedback submission endpoint (customer-only) — rating 1–5 plus an optional comment
+- [x] Feedback list endpoint (admin/agent-only), paginated, newest first
+- [x] `feedback.submit` (customer-only) and `feedback.read` (admin/agent-only) permissions seeded
+
+### Test Coverage
+
+- [x] FeedbackEndpointsTests.cs — all 8 Test Plan cases (submit with rating+comment 201 w/ resolved CustomerName, rating-only 201 w/ null Comment, rating out of range 400, comment too long 400, agent/admin submit 403, customer list 403, admin/agent list paginated newest-first, invalid paging 400)
+- [x] Permission seeding — `feedback.submit` confirmed customer-only, `feedback.read` confirmed admin/agent-only
+
+### Verification
+
+| Command | Result | Evidence |
+|---|---|---|
+| `dotnet build CustomerSupportCRM.slnx` | Passed | 0 warnings, 0 errors (re-verified 2026-10-07) |
+| `dotnet test tests/CustomerManagement.Api.Tests/CustomerManagement.Api.Tests.csproj` | Passed | 185/185 passing, including `FeedbackEndpointsTests.cs` (re-verified 2026-10-07) |
+| `ng build` / `ng test` | N/A | This story is API-only; the customer feedback form is built in Story 23 |
 
 **STOP HERE. Report to the user and wait for confirmation before proceeding to Story 23.**
