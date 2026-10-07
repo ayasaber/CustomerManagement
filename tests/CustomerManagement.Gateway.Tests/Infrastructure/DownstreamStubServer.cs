@@ -82,6 +82,21 @@ public sealed class DownstreamStubServer : IAsyncDisposable
             ["GET", "POST"],
             (Delegate)HandleRequestAsync);
 
+        app.MapMethods(
+            "/api/help-articles/{**catchAll}",
+            ["GET", "POST", "PUT"],
+            (Delegate)HandleRequestAsync);
+
+        app.MapMethods(
+            "/api/guides/{**catchAll}",
+            ["GET", "POST", "PUT"],
+            (Delegate)HandleRequestAsync);
+
+        app.MapMethods(
+            "/api/knowledge-base/{**catchAll}",
+            ["GET"],
+            (Delegate)HandleRequestAsync);
+
         await app.StartAsync(cancellationToken);
 
         var address = app.Urls.Single();
@@ -220,6 +235,21 @@ public sealed class DownstreamStubServer : IAsyncDisposable
         if (path.StartsWith("/api/feedback", StringComparison.OrdinalIgnoreCase))
         {
             return "feedback.read";
+        }
+
+        if (path.StartsWith("/api/help-articles", StringComparison.OrdinalIgnoreCase))
+        {
+            return "help-articles.read";
+        }
+
+        if (path.StartsWith("/api/guides", StringComparison.OrdinalIgnoreCase))
+        {
+            return "guides.read";
+        }
+
+        if (path.StartsWith("/api/knowledge-base", StringComparison.OrdinalIgnoreCase))
+        {
+            return "knowledge-base.search";
         }
 
         return "customers.read";

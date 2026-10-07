@@ -8,7 +8,7 @@ public enum KnowledgeBaseContentType
 }
 
 public sealed record KnowledgeBaseSearchResultResponse(
-    KnowledgeBaseContentType ContentType,
+    string ContentType,
     Guid Id,
     string Title,
     string Snippet);

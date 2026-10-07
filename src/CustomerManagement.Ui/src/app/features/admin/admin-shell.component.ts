@@ -17,6 +17,8 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
             <a routerLink="/admin/system-settings" routerLinkActive="active">System Settings</a>
             <a routerLink="/admin/ticket-taxonomy" routerLinkActive="active">Ticket Taxonomy</a>
             <a routerLink="/admin/faq" routerLinkActive="active">FAQ</a>
+            <a routerLink="/admin/help-articles" routerLinkActive="active">Help Articles</a>
+            <a routerLink="/admin/guides" routerLinkActive="active">Guides</a>
           </aside>
 
           <section class="admin-content">

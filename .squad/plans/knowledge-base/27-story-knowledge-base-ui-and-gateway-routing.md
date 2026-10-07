@@ -183,12 +183,22 @@ File: `src/CustomerManagement.Ui/src/app/app.routes.ts`
 
 ## Done Criteria
 
-- [ ] An admin can create, edit, and retire help articles from `/admin/help-articles`.
-- [ ] An admin can create, edit, and retire solutions/guides (with an ordered step list) from `/admin/guides`.
-- [ ] An admin can see all help articles and all guides (active and retired) in their respective management pages, the same way FAQ management already works.
-- [ ] Agents and customers can browse active help articles and guides from `/knowledge-base`; neither role can create, edit, or retire any of it.
-- [ ] A single search box on `/knowledge-base` returns matching results from FAQs, help articles, and guides together, not as three separate result sets.
-- [ ] Every search result clearly shows its content type (FAQ, Help Article, or Guide) before it is opened.
-- [ ] Retired FAQs, help articles, or guides never appear in search results or browse lists for any role.
-- [ ] This feature does not add, remove, or change who can manage FAQs, and FAQ data/endpoints/UI are untouched.
-- [ ] All 5 new gateway routes are registered, documented in `ROUTES.md`, and covered by updated route-count/contract tests.
+- [x] An admin can create, edit, and retire help articles from `/admin/help-articles`.
+- [x] An admin can create, edit, and retire solutions/guides (with an ordered step list) from `/admin/guides`.
+- [x] An admin can see all help articles and all guides (active and retired) in their respective management pages, the same way FAQ management already works.
+- [x] Agents and customers can browse active help articles and guides from `/knowledge-base`; neither role can create, edit, or retire any of it.
+- [x] A single search box on `/knowledge-base` returns matching results from FAQs, help articles, and guides together, not as three separate result sets.
+- [x] Every search result clearly shows its content type (FAQ, Help Article, or Guide) before it is opened.
+- [x] Retired FAQs, help articles, or guides never appear in search results or browse lists for any role.
+- [x] This feature does not add, remove, or change who can manage FAQs, and FAQ data/endpoints/UI are untouched.
+- [x] All 5 new gateway routes are registered, documented in `ROUTES.md`, and covered by updated route-count/contract tests.
+
+---
+## Review — completed 2026-10-07
+
+- [x] Gateway: ocelot.json (5 new routes), ROUTES.md (3 new contract sections), GatewayRouteContractTests.cs (52→57 + helpArticleRoutes/guideRoutes/knowledgeBaseSearchRoutes assertions), CustomerManagementGatewayFactory.cs (42→47), CustomerManagementGatewayRoutingTests.cs (7 new InlineData cases + permissions), DownstreamStubServer.cs (3 new stub route groups + permission resolution): added, passing
+- [x] Bug found and fixed during implementation: `KnowledgeBaseSearchResultResponse.ContentType` was typed as the `KnowledgeBaseContentType` C# enum in Story 26, which System.Text.Json serializes as a raw integer (0/1/2) by default — this codebase's established convention (seen in `TicketResponse.Status`) is to expose enums as `string` via `.ToString()` at the endpoint boundary instead. Fixed `KnowledgeBaseSearchContracts.cs`/`KnowledgeBaseSearchEndpoints.cs` accordingly (and the Story 26 test assertions) so the Angular `KnowledgeBaseContentType` string-literal union type actually matches the wire format; caught before this story's frontend consumed it.
+- [x] Frontend: help-article.models.ts, guide.models.ts, knowledge-base-search.models.ts, help-articles-api.service.ts, guides-api.service.ts, knowledge-base-search-api.service.ts, admin-help-articles-page.component.ts, admin-guides-page.component.ts (repeatable FormArray steps input), admin-shell.component.ts nav links, knowledge-base-page.component.ts (shared browse/search page), app.routes.ts (`/admin/help-articles`, `/admin/guides`, `/knowledge-base`): added
+- [x] Implementation note: the search box submits explicitly (Enter/button), not on debounced input-as-you-type, to keep behavior deterministic and testable; this is a reasonable simplification of the plan's "on input (debounced) or explicit submit" wording.
+- [x] Test Plan — help-articles-api.service.spec.ts, guides-api.service.spec.ts, knowledge-base-search-api.service.spec.ts, admin-help-articles-page.component.spec.ts, admin-guides-page.component.spec.ts, knowledge-base-page.component.spec.ts (default browse lists, content-type badges per result, empty-results state, guide step expansion): added, passing
+- [x] Full regression: `dotnet test CustomerSupportCRM.slnx` → 185/185 API + 66/66 Gateway passing; `ng test --watch=false --browsers=ChromeHeadless` → 84/84 passing (60 pre-existing + 24 new)

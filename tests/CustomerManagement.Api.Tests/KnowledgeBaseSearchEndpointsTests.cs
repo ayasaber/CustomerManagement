@@ -41,13 +41,13 @@ public sealed class KnowledgeBaseSearchEndpointsTests : IClassFixture<CustomerMa
         Assert.NotNull(payload);
 
         var faqResult = Assert.Single(payload!.Results, r => r.Id == faq.Id);
-        Assert.Equal(KnowledgeBaseContentType.Faq, faqResult.ContentType);
+        Assert.Equal(nameof(KnowledgeBaseContentType.Faq), faqResult.ContentType);
 
         var articleResult = Assert.Single(payload.Results, r => r.Id == article.Id);
-        Assert.Equal(KnowledgeBaseContentType.HelpArticle, articleResult.ContentType);
+        Assert.Equal(nameof(KnowledgeBaseContentType.HelpArticle), articleResult.ContentType);
 
         var guideResult = Assert.Single(payload.Results, r => r.Id == guide.Id);
-        Assert.Equal(KnowledgeBaseContentType.Guide, guideResult.ContentType);
+        Assert.Equal(nameof(KnowledgeBaseContentType.Guide), guideResult.ContentType);
         Assert.Contains(term, guideResult.Snippet, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Second step", guideResult.Snippet);
     }

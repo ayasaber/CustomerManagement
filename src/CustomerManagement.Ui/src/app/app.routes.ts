@@ -7,6 +7,8 @@ import { customerOnlyGuard } from './core/guards/customer-only.guard';
 import { AdminShellComponent } from './features/admin/admin-shell.component';
 import { AdminAuditLogPageComponent } from './features/admin/audit/admin-audit-log-page.component';
 import { AdminFaqPageComponent } from './features/admin/faq/admin-faq-page.component';
+import { AdminGuidesPageComponent } from './features/admin/guides/admin-guides-page.component';
+import { AdminHelpArticlesPageComponent } from './features/admin/help-articles/admin-help-articles-page.component';
 import { AdminRolesPermissionsPageComponent } from './features/admin/roles-permissions/admin-roles-permissions-page.component';
 import { AdminSystemSettingsPageComponent } from './features/admin/settings/admin-system-settings-page.component';
 import { AdminTicketTaxonomyPageComponent } from './features/admin/ticket-taxonomy/admin-ticket-taxonomy-page.component';
@@ -17,6 +19,7 @@ import { AgentDashboardPageComponent } from './features/agent-dashboard/agent-da
 import { CustomerManagementPageComponent } from './features/customer-management/customer-management-page.component';
 import { ForbiddenPageComponent } from './features/customer-management/forbidden-page.component';
 import { CustomerPortalPageComponent } from './features/landing/customer-portal-page.component';
+import { KnowledgeBasePageComponent } from './features/knowledge-base/knowledge-base-page.component';
 import { TicketManagementPageComponent } from './features/tickets/ticket-management-page.component';
 
 export const routes: Routes = [
@@ -63,6 +66,14 @@ export const routes: Routes = [
 			{
 				path: 'faq',
 				component: AdminFaqPageComponent
+			},
+			{
+				path: 'help-articles',
+				component: AdminHelpArticlesPageComponent
+			},
+			{
+				path: 'guides',
+				component: AdminGuidesPageComponent
 			}
 		]
 	},
@@ -85,6 +96,11 @@ export const routes: Routes = [
 		path: 'tickets',
 		canActivate: [authenticatedGuard],
 		component: TicketManagementPageComponent
+	},
+	{
+		path: 'knowledge-base',
+		canActivate: [authenticatedGuard],
+		component: KnowledgeBasePageComponent
 	},
 	{
 		path: 'forbidden',

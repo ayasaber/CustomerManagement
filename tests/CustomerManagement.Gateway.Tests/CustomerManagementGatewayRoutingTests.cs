@@ -122,6 +122,13 @@ public sealed class CustomerManagementGatewayRoutingTests : IAsyncLifetime
     [InlineData("PUT", "/api/faq/11111111-1111-1111-1111-111111111111")]
     [InlineData("GET", "/api/feedback?page=1&pageSize=20")]
     [InlineData("POST", "/api/feedback")]
+    [InlineData("GET", "/api/help-articles")]
+    [InlineData("POST", "/api/help-articles")]
+    [InlineData("PUT", "/api/help-articles/11111111-1111-1111-1111-111111111111")]
+    [InlineData("GET", "/api/guides")]
+    [InlineData("POST", "/api/guides")]
+    [InlineData("PUT", "/api/guides/11111111-1111-1111-1111-111111111111")]
+    [InlineData("GET", "/api/knowledge-base/search?q=billing")]
     public async Task Gateway_RoutesAgentDashboardRequests_ToDownstream(string method, string pathAndQuery)
     {
         using var request = NewAuthorizedRequest(
@@ -145,7 +152,12 @@ public sealed class CustomerManagementGatewayRoutingTests : IAsyncLifetime
                 "faq.read",
                 "faq.manage",
                 "feedback.read",
-                "feedback.submit"
+                "feedback.submit",
+                "help-articles.read",
+                "help-articles.manage",
+                "guides.read",
+                "guides.manage",
+                "knowledge-base.search"
             ]);
 
         var response = await _gatewayClient.SendAsync(request);

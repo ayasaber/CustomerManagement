@@ -723,6 +723,101 @@
       }
     },
     {
+      "DownstreamPathTemplate": "/api/help-articles",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/help-articles",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/help-articles/{articleId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/help-articles/{articleId}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/guides",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/guides",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/guides/{guideId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/guides/{guideId}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/knowledge-base/search",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5215
+        }
+      ],
+      "UpstreamPathTemplate": "/api/knowledge-base/search",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "AddHeadersToRequest": {
+        "X-User-Id": "{X-User-Id}",
+        "X-User-Email": "{X-User-Email}"
+      }
+    },
+    {
       "DownstreamPathTemplate": "/api/admin/users",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [

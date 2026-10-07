@@ -68,7 +68,7 @@ public static class KnowledgeBaseSearchEndpoints
             }
 
             ranked.Add((score, new KnowledgeBaseSearchResultResponse(
-                KnowledgeBaseContentType.Faq, entry.Id, entry.Question, Truncate(entry.Answer))));
+                KnowledgeBaseContentType.Faq.ToString(), entry.Id, entry.Question, Truncate(entry.Answer))));
         }
 
         foreach (var entry in helpArticles)
@@ -80,7 +80,7 @@ public static class KnowledgeBaseSearchEndpoints
             }
 
             ranked.Add((score, new KnowledgeBaseSearchResultResponse(
-                KnowledgeBaseContentType.HelpArticle, entry.Id, entry.Title, Truncate(entry.Body))));
+                KnowledgeBaseContentType.HelpArticle.ToString(), entry.Id, entry.Title, Truncate(entry.Body))));
         }
 
         foreach (var entry in guides)
@@ -96,7 +96,7 @@ public static class KnowledgeBaseSearchEndpoints
             var matchingStep = orderedSteps.FirstOrDefault(step => ContainsAnyTerm(step.Instruction, terms));
             var snippetSource = matchingStep?.Instruction ?? orderedSteps.FirstOrDefault()?.Instruction ?? string.Empty;
             ranked.Add((score, new KnowledgeBaseSearchResultResponse(
-                KnowledgeBaseContentType.Guide, entry.Id, entry.Title, Truncate(snippetSource))));
+                KnowledgeBaseContentType.Guide.ToString(), entry.Id, entry.Title, Truncate(snippetSource))));
         }
 
         var results = ranked

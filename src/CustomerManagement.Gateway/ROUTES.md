@@ -70,6 +70,26 @@ Customer and ticket-management APIs are exposed via Ocelot under the `/api/custo
 |---|---|---|---|
 | `/api/feedback` | `GET`, `POST` | `/api/feedback` | Submit is customer-only; read is agent/admin-only |
 
+## Help Article Route Contract
+
+| Upstream Path | Methods | Downstream Path | Auth |
+|---|---|---|---|
+| `/api/help-articles` | `GET`, `POST` | `/api/help-articles` | Read is customer/agent/admin; create requires admin `help-articles.manage` permission |
+| `/api/help-articles/{articleId}` | `PUT` | `/api/help-articles/{articleId}` | Update/retire a help article; admin `help-articles.manage` permission only |
+
+## Guide Route Contract
+
+| Upstream Path | Methods | Downstream Path | Auth |
+|---|---|---|---|
+| `/api/guides` | `GET`, `POST` | `/api/guides` | Read is customer/agent/admin; create requires admin `guides.manage` permission |
+| `/api/guides/{guideId}` | `PUT` | `/api/guides/{guideId}` | Update/retire a solution/guide; admin `guides.manage` permission only |
+
+## Knowledge Base Search Route Contract
+
+| Upstream Path | Methods | Downstream Path | Auth |
+|---|---|---|---|
+| `/api/knowledge-base/search` | `GET` | `/api/knowledge-base/search` | Accessible to customer/agent/admin; returns combined FAQ/help-article/guide results, active content only |
+
 ## Auth Route Contract
 
 | Upstream Path | Methods | Downstream Path | Auth |
