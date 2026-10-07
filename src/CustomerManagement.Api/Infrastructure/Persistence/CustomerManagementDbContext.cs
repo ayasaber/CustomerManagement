@@ -43,6 +43,10 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
 
     public DbSet<HelpArticle> HelpArticles => Set<HelpArticle>();
 
+    public DbSet<Guide> Guides => Set<Guide>();
+
+    public DbSet<GuideStep> GuideSteps => Set<GuideStep>();
+
     public DbSet<TicketHistoryEntry> TicketHistoryEntries => Set<TicketHistoryEntry>();
 
     public DbSet<TicketTask> TicketTasks => Set<TicketTask>();
@@ -451,6 +455,43 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
                 .IsRowVersion();
 
             entity.HasIndex(a => a.Title);
+        });
+
+        modelBuilder.Entity<Guide>(entity =>
+        {
+            entity.ToTable("Guides");
+            entity.HasKey(g => g.Id);
+            entity.Property(g => g.Title)
+                .HasMaxLength(200)
+                .IsRequired();
+            entity.Property(g => g.IsActive)
+                .IsRequired();
+            entity.Property(g => g.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(g => g.UpdatedAtUtc)
+                .IsRequired();
+            entity.Property(g => g.RowVersion)
+                .IsRowVersion();
+
+            entity.HasIndex(g => g.Title);
+            entity.HasMany(g => g.Steps)
+                .WithOne()
+                .HasForeignKey(s => s.GuideId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<GuideStep>(entity =>
+        {
+            entity.ToTable("GuideSteps");
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.Instruction)
+                .HasMaxLength(1000)
+                .IsRequired();
+            entity.Property(s => s.StepNumber)
+                .IsRequired();
+
+            entity.HasIndex(s => new { s.GuideId, s.StepNumber })
+                .IsUnique();
         });
 
         modelBuilder.Entity<Ticket>(entity =>

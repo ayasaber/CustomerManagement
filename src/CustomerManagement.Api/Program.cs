@@ -113,6 +113,7 @@ app.MapTicketCategoryEndpoints();
 app.MapTicketPriorityEndpoints();
 app.MapFaqEndpoints();
 app.MapHelpArticleEndpoints();
+app.MapGuideEndpoints();
 app.MapTicketEndpoints();
 app.MapTicketAttachmentEndpoints();
 app.MapTicketMessagesEndpoints();

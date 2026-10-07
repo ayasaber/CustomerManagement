@@ -80,6 +80,8 @@ public sealed class TestAuthHandler(
                 Permissions.FaqManage,
                 Permissions.HelpArticlesRead,
                 Permissions.HelpArticlesManage,
+                Permissions.GuidesRead,
+                Permissions.GuidesManage,
                 Permissions.FeedbackRead
             ],
             AuthRoles.Agent =>
@@ -106,6 +108,7 @@ public sealed class TestAuthHandler(
                 Permissions.TicketMessagesWrite,
                 Permissions.FaqRead,
                 Permissions.HelpArticlesRead,
+                Permissions.GuidesRead,
                 Permissions.FeedbackRead
             ],
             AuthRoles.Customer =>
@@ -117,6 +120,7 @@ public sealed class TestAuthHandler(
                 Permissions.TicketMessagesWrite,
                 Permissions.FaqRead,
                 Permissions.HelpArticlesRead,
+                Permissions.GuidesRead,
                 Permissions.FeedbackSubmit
             ],
             _ => []

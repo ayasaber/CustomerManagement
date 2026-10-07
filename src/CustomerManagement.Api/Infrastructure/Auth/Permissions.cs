@@ -43,6 +43,9 @@ public static class Permissions
     public const string HelpArticlesRead = "help-articles.read";
     public const string HelpArticlesManage = "help-articles.manage";
 
+    public const string GuidesRead = "guides.read";
+    public const string GuidesManage = "guides.manage";
+
     public const string FeedbackSubmit = "feedback.submit";
     public const string FeedbackRead = "feedback.read";
 }

@@ -112,6 +112,8 @@ public static class IdentitySeedData
             [Permissions.FaqManage] = "Create, update, and retire FAQ entries.",
             [Permissions.HelpArticlesRead] = "Browse active help articles.",
             [Permissions.HelpArticlesManage] = "Create, update, and retire help articles.",
+            [Permissions.GuidesRead] = "Browse active solutions and guides.",
+            [Permissions.GuidesManage] = "Create, update, and retire solutions and guides.",
             [Permissions.FeedbackSubmit] = "Submit customer experience feedback.",
             [Permissions.FeedbackRead] = "Read submitted customer feedback."
         };
@@ -183,6 +185,8 @@ public static class IdentitySeedData
                 Permissions.FaqManage,
                 Permissions.HelpArticlesRead,
                 Permissions.HelpArticlesManage,
+                Permissions.GuidesRead,
+                Permissions.GuidesManage,
                 Permissions.FeedbackRead
             ],
             [AuthRoles.Agent] =
@@ -209,6 +213,7 @@ public static class IdentitySeedData
                 Permissions.TicketMessagesWrite,
                 Permissions.FaqRead,
                 Permissions.HelpArticlesRead,
+                Permissions.GuidesRead,
                 Permissions.FeedbackRead
             ],
             [AuthRoles.Customer] =
@@ -220,6 +225,7 @@ public static class IdentitySeedData
                 Permissions.TicketMessagesWrite,
                 Permissions.FaqRead,
                 Permissions.HelpArticlesRead,
+                Permissions.GuidesRead,
                 Permissions.FeedbackSubmit
             ]
         };
