@@ -32,9 +32,28 @@ Entry point for the **knowledge-base** feature. Stories execute in order by thei
 
 * [Gateway API Route Contract](../../../src/CustomerManagement.Gateway/ROUTES.md)
 * Existing FAQ precedent (unmodified by this feature): [FAQ Endpoints](../../../src/CustomerManagement.Api/Endpoints/Faq/FaqEndpoints.cs)
+* [Help Article Endpoints](../../../src/CustomerManagement.Api/Endpoints/KnowledgeBase/HelpArticleEndpoints.cs)
+* [Guide Endpoints](../../../src/CustomerManagement.Api/Endpoints/KnowledgeBase/GuideEndpoints.cs)
+* [Knowledge Base Search Endpoints](../../../src/CustomerManagement.Api/Endpoints/KnowledgeBase/KnowledgeBaseSearchEndpoints.cs)
+
+## Frontend Implementation
+
+* [Knowledge Base Page Component](../../../src/CustomerManagement.Ui/src/app/features/knowledge-base/knowledge-base-page.component.ts)
+* [Admin Help Articles Page Component](../../../src/CustomerManagement.Ui/src/app/features/admin/help-articles/admin-help-articles-page.component.ts)
+* [Admin Guides Page Component](../../../src/CustomerManagement.Ui/src/app/features/admin/guides/admin-guides-page.component.ts)
 
 ## Verification References
 
 * [API Test Project](../../../tests/CustomerManagement.Api.Tests/CustomerManagement.Api.Tests.csproj)
 * [Gateway Test Project](../../../tests/CustomerManagement.Gateway.Tests/CustomerManagement.Gateway.Tests.csproj)
 * [Gateway Route Contract Tests](../../../tests/CustomerManagement.Gateway.Tests/GatewayRouteContractTests.cs)
+* [Gateway Routing Tests](../../../tests/CustomerManagement.Gateway.Tests/CustomerManagementGatewayRoutingTests.cs)
+* [Help Article Endpoints Tests](../../../tests/CustomerManagement.Api.Tests/HelpArticleEndpointsTests.cs)
+* [Guide Endpoints Tests](../../../tests/CustomerManagement.Api.Tests/GuideEndpointsTests.cs)
+* [Knowledge Base Search Endpoints Tests](../../../tests/CustomerManagement.Api.Tests/KnowledgeBaseSearchEndpointsTests.cs)
+* [Help Articles API Service Tests](../../../src/CustomerManagement.Ui/src/app/core/services/help-articles-api.service.spec.ts)
+* [Guides API Service Tests](../../../src/CustomerManagement.Ui/src/app/core/services/guides-api.service.spec.ts)
+* [Knowledge Base Search API Service Tests](../../../src/CustomerManagement.Ui/src/app/core/services/knowledge-base-search-api.service.spec.ts)
+* [Admin Help Articles Page Component Tests](../../../src/CustomerManagement.Ui/src/app/features/admin/help-articles/admin-help-articles-page.component.spec.ts)
+* [Admin Guides Page Component Tests](../../../src/CustomerManagement.Ui/src/app/features/admin/guides/admin-guides-page.component.spec.ts)
+* [Knowledge Base Page Component Tests](../../../src/CustomerManagement.Ui/src/app/features/knowledge-base/knowledge-base-page.component.spec.ts)
