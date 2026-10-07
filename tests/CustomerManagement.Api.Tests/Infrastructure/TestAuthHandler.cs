@@ -82,6 +82,7 @@ public sealed class TestAuthHandler(
                 Permissions.HelpArticlesManage,
                 Permissions.GuidesRead,
                 Permissions.GuidesManage,
+                Permissions.KnowledgeBaseSearch,
                 Permissions.FeedbackRead
             ],
             AuthRoles.Agent =>
@@ -109,6 +110,7 @@ public sealed class TestAuthHandler(
                 Permissions.FaqRead,
                 Permissions.HelpArticlesRead,
                 Permissions.GuidesRead,
+                Permissions.KnowledgeBaseSearch,
                 Permissions.FeedbackRead
             ],
             AuthRoles.Customer =>
@@ -121,6 +123,7 @@ public sealed class TestAuthHandler(
                 Permissions.FaqRead,
                 Permissions.HelpArticlesRead,
                 Permissions.GuidesRead,
+                Permissions.KnowledgeBaseSearch,
                 Permissions.FeedbackSubmit
             ],
             _ => []

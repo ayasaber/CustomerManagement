@@ -114,6 +114,7 @@ public static class IdentitySeedData
             [Permissions.HelpArticlesManage] = "Create, update, and retire help articles.",
             [Permissions.GuidesRead] = "Browse active solutions and guides.",
             [Permissions.GuidesManage] = "Create, update, and retire solutions and guides.",
+            [Permissions.KnowledgeBaseSearch] = "Search FAQs, help articles, and guides together.",
             [Permissions.FeedbackSubmit] = "Submit customer experience feedback.",
             [Permissions.FeedbackRead] = "Read submitted customer feedback."
         };
@@ -187,6 +188,7 @@ public static class IdentitySeedData
                 Permissions.HelpArticlesManage,
                 Permissions.GuidesRead,
                 Permissions.GuidesManage,
+                Permissions.KnowledgeBaseSearch,
                 Permissions.FeedbackRead
             ],
             [AuthRoles.Agent] =
@@ -214,6 +216,7 @@ public static class IdentitySeedData
                 Permissions.FaqRead,
                 Permissions.HelpArticlesRead,
                 Permissions.GuidesRead,
+                Permissions.KnowledgeBaseSearch,
                 Permissions.FeedbackRead
             ],
             [AuthRoles.Customer] =
@@ -226,6 +229,7 @@ public static class IdentitySeedData
                 Permissions.FaqRead,
                 Permissions.HelpArticlesRead,
                 Permissions.GuidesRead,
+                Permissions.KnowledgeBaseSearch,
                 Permissions.FeedbackSubmit
             ]
         };

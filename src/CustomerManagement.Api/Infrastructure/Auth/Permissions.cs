@@ -46,6 +46,8 @@ public static class Permissions
     public const string GuidesRead = "guides.read";
     public const string GuidesManage = "guides.manage";
 
+    public const string KnowledgeBaseSearch = "knowledge-base.search";
+
     public const string FeedbackSubmit = "feedback.submit";
     public const string FeedbackRead = "feedback.read";
 }

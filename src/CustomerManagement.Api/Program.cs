@@ -114,6 +114,7 @@ app.MapTicketPriorityEndpoints();
 app.MapFaqEndpoints();
 app.MapHelpArticleEndpoints();
 app.MapGuideEndpoints();
+app.MapKnowledgeBaseSearchEndpoints();
 app.MapTicketEndpoints();
 app.MapTicketAttachmentEndpoints();
 app.MapTicketMessagesEndpoints();
