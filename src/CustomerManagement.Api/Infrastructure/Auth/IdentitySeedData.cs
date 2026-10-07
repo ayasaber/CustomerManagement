@@ -110,6 +110,8 @@ public static class IdentitySeedData
             [Permissions.TicketMessagesWrite] = "Post customer-visible ticket conversation messages (agent, admin, or the owning customer).",
             [Permissions.FaqRead] = "Browse active FAQ entries.",
             [Permissions.FaqManage] = "Create, update, and retire FAQ entries.",
+            [Permissions.HelpArticlesRead] = "Browse active help articles.",
+            [Permissions.HelpArticlesManage] = "Create, update, and retire help articles.",
             [Permissions.FeedbackSubmit] = "Submit customer experience feedback.",
             [Permissions.FeedbackRead] = "Read submitted customer feedback."
         };
@@ -179,6 +181,8 @@ public static class IdentitySeedData
                 Permissions.TicketMessagesWrite,
                 Permissions.FaqRead,
                 Permissions.FaqManage,
+                Permissions.HelpArticlesRead,
+                Permissions.HelpArticlesManage,
                 Permissions.FeedbackRead
             ],
             [AuthRoles.Agent] =
@@ -204,6 +208,7 @@ public static class IdentitySeedData
                 Permissions.TicketMessagesRead,
                 Permissions.TicketMessagesWrite,
                 Permissions.FaqRead,
+                Permissions.HelpArticlesRead,
                 Permissions.FeedbackRead
             ],
             [AuthRoles.Customer] =
@@ -214,6 +219,7 @@ public static class IdentitySeedData
                 Permissions.TicketMessagesRead,
                 Permissions.TicketMessagesWrite,
                 Permissions.FaqRead,
+                Permissions.HelpArticlesRead,
                 Permissions.FeedbackSubmit
             ]
         };

@@ -1,6 +1,7 @@
 using CustomerManagement.Api.Domain.Customers;
 using CustomerManagement.Api.Domain.Dashboard;
 using CustomerManagement.Api.Domain.Faq;
+using CustomerManagement.Api.Domain.KnowledgeBase;
 using CustomerManagement.Api.Domain.Security;
 using CustomerManagement.Api.Domain.Tickets;
 using Microsoft.AspNetCore.Identity;
@@ -39,6 +40,8 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
     public DbSet<TicketPriority> TicketPriorities => Set<TicketPriority>();
 
     public DbSet<FaqEntry> FaqEntries => Set<FaqEntry>();
+
+    public DbSet<HelpArticle> HelpArticles => Set<HelpArticle>();
 
     public DbSet<TicketHistoryEntry> TicketHistoryEntries => Set<TicketHistoryEntry>();
 
@@ -426,6 +429,28 @@ public sealed class CustomerManagementDbContext(DbContextOptions<CustomerManagem
                 .IsRowVersion();
 
             entity.HasIndex(f => new { f.Topic, f.SortOrder });
+        });
+
+        modelBuilder.Entity<HelpArticle>(entity =>
+        {
+            entity.ToTable("HelpArticles");
+            entity.HasKey(a => a.Id);
+            entity.Property(a => a.Title)
+                .HasMaxLength(200)
+                .IsRequired();
+            entity.Property(a => a.Body)
+                .HasMaxLength(10000)
+                .IsRequired();
+            entity.Property(a => a.IsActive)
+                .IsRequired();
+            entity.Property(a => a.CreatedAtUtc)
+                .IsRequired();
+            entity.Property(a => a.UpdatedAtUtc)
+                .IsRequired();
+            entity.Property(a => a.RowVersion)
+                .IsRowVersion();
+
+            entity.HasIndex(a => a.Title);
         });
 
         modelBuilder.Entity<Ticket>(entity =>

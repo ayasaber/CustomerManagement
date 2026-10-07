@@ -40,6 +40,9 @@ public static class Permissions
     public const string FaqRead = "faq.read";
     public const string FaqManage = "faq.manage";
 
+    public const string HelpArticlesRead = "help-articles.read";
+    public const string HelpArticlesManage = "help-articles.manage";
+
     public const string FeedbackSubmit = "feedback.submit";
     public const string FeedbackRead = "feedback.read";
 }

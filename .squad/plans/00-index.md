@@ -10,3 +10,4 @@ One row per feature folder under `.squad/plans/`. `NN` continues as a global exe
 | agent-dashboard | [agent-dashboard/00-overview.md](agent-dashboard/00-overview.md) | 14-18 |
 | ticket-conversation | [ticket-conversation/00-overview.md](ticket-conversation/00-overview.md) | 19-19 |
 | customer-portal | [customer-portal/00-overview.md](customer-portal/00-overview.md) | 20-23 |
+| knowledge-base | [knowledge-base/00-overview.md](knowledge-base/00-overview.md) | 24-27 |
