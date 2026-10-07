@@ -307,5 +307,11 @@ File: `src/CustomerManagement.Api/Infrastructure/Auth/IdentitySeedData.cs`
   5. Roll back the EF migration (drop `TicketAttachments`).
 
 ---
+## Review — completed 2026-10-07
+
+- [x] TicketEndpointsTests.cs — priority default/ignored/no-active-priority cases: added, passing
+- [x] TicketAttachmentEndpointsTests.cs — all 7 ownership/validation/cleanup scenarios: added, passing
+- [x] TicketMessagesEndpointsTests.cs — customer reply + auto-reopen + closed-ticket-blocked cases: added, passing
+- [x] Permission seeding — ticket-messages.write confirmed for Customer role (AuthEndpointsTests.cs): added, passing
 
 **STOP HERE. Report to the user and wait for confirmation before proceeding to Story 21.**

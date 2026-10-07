@@ -200,5 +200,9 @@ Register `app.MapFaqEndpoints();` in `src/CustomerManagement.Api/Program.cs` nex
   3. Roll back the EF migration (drop `FaqEntries`).
 
 ---
+## Review — completed 2026-10-07
+
+- [x] FaqEndpointsTests.cs — all 8 Test Plan cases (admin create 201, non-admin create/update 403, customer list active-only even with `activeOnly=false`, agent/admin list active+retired, admin retire removes entry from customer list, stale RowVersion 409, unknown id 404, missing/too-long field validation): added, passing
+- [x] Permission seeding — `faq.read` confirmed for admin/agent/customer, `faq.manage` confirmed admin-only: added, passing
 
 **STOP HERE. Report to the user and wait for confirmation before proceeding to Story 22.**

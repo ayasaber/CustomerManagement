@@ -297,15 +297,27 @@ Isolation requirement: this component must not import or link to anything under 
 
 ## Done Criteria
 
-- [ ] A customer can submit a new request with subject, description, category, and an optional attachment, and never sees a priority control.
-- [ ] A submitted customer request appears in the same `/api/tickets` data the agent/admin `/tickets` screen already reads — no separate system.
-- [ ] A customer sees only their own requests with current status on `/customer/portal`.
-- [ ] A customer can open one of their own requests and read the full conversation in chronological order via the shared `TicketConversationPanelComponent`.
-- [ ] A customer can reply to one of their own open requests; replying on a `Resolved`/`WaitingOnCustomer` ticket moves it to `InProgress`, and replying on a `Closed` ticket is blocked.
-- [ ] A customer can never see, open, or reply to another customer's request, including by direct ticket id (`404`, not `403`).
-- [ ] An admin can create, update, and retire FAQ entries from `/admin/faq`.
-- [ ] A customer can browse only active FAQ entries, grouped by topic.
-- [ ] A customer can submit feedback (rating + optional comment) at any time, independent of any ticket.
-- [ ] Submitted feedback is visible to agents/admins via `GET /api/feedback`, with no customer-facing read access.
-- [ ] `/customer/portal` is reachable only by the `customer` role; agents/admins are redirected to `/forbidden`.
-- [ ] All new gateway routes are registered, documented in `ROUTES.md`, and covered by updated route-count/contract tests.
+- [x] A customer can submit a new request with subject, description, category, and an optional attachment, and never sees a priority control.
+- [x] A submitted customer request appears in the same `/api/tickets` data the agent/admin `/tickets` screen already reads — no separate system.
+- [x] A customer sees only their own requests with current status on `/customer/portal`.
+- [x] A customer can open one of their own requests and read the full conversation in chronological order via the shared `TicketConversationPanelComponent`.
+- [x] A customer can reply to one of their own open requests; replying on a `Resolved`/`WaitingOnCustomer` ticket moves it to `InProgress`, and replying on a `Closed` ticket is blocked.
+- [x] A customer can never see, open, or reply to another customer's request, including by direct ticket id (`404`, not `403`).
+- [x] An admin can create, update, and retire FAQ entries from `/admin/faq`.
+- [x] A customer can browse only active FAQ entries, grouped by topic.
+- [x] A customer can submit feedback (rating + optional comment) at any time, independent of any ticket.
+- [x] Submitted feedback is visible to agents/admins via `GET /api/feedback`, with no customer-facing read access.
+- [x] `/customer/portal` is reachable only by the `customer` role; agents/admins are redirected to `/forbidden`.
+- [x] All new gateway routes are registered, documented in `ROUTES.md`, and covered by updated route-count/contract tests.
+
+---
+## Review — completed 2026-10-07
+
+- [x] Gateway Tasks — ocelot.json routes, ROUTES.md, GatewayRouteContractTests.cs, CustomerManagementGatewayFactory.cs, CustomerManagementGatewayRoutingTests.cs, DownstreamStubServer.cs updated for the 5 new routes: added, passing
+- [x] customer-only.guard.spec.ts: added, passing
+- [x] ticket-management-api.service.spec.ts (new file — attachment methods + optional priorityId): added, passing
+- [x] faq-api.service.spec.ts: added, passing
+- [x] feedback-api.service.spec.ts: added, passing
+- [x] customer-portal-page.component.spec.ts (My Requests render, New Request form/no-priority-control, conversation panel canCompose, FAQ grouping/empty state, feedback rating required): added, passing
+- [x] admin-faq-page.component.spec.ts (render, create, retire toggle): added, passing
+

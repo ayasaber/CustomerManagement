@@ -75,7 +75,10 @@ public sealed class TestAuthHandler(
                 Permissions.TicketHandoffRespond,
                 Permissions.TicketHandoffForceAssign,
                 Permissions.TicketMessagesRead,
-                Permissions.TicketMessagesWrite
+                Permissions.TicketMessagesWrite,
+                Permissions.FaqRead,
+                Permissions.FaqManage,
+                Permissions.FeedbackRead
             ],
             AuthRoles.Agent =>
             [
@@ -98,7 +101,9 @@ public sealed class TestAuthHandler(
                 Permissions.TicketHandoffRequestCreate,
                 Permissions.TicketHandoffRespond,
                 Permissions.TicketMessagesRead,
-                Permissions.TicketMessagesWrite
+                Permissions.TicketMessagesWrite,
+                Permissions.FaqRead,
+                Permissions.FeedbackRead
             ],
             AuthRoles.Customer =>
             [
@@ -106,7 +111,9 @@ public sealed class TestAuthHandler(
                 Permissions.TicketsWrite,
                 Permissions.TicketsClose,
                 Permissions.TicketMessagesRead,
-                Permissions.TicketMessagesWrite
+                Permissions.TicketMessagesWrite,
+                Permissions.FaqRead,
+                Permissions.FeedbackSubmit
             ],
             _ => []
         };

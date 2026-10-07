@@ -177,5 +177,9 @@ Register `app.MapFeedbackEndpoints();` in `src/CustomerManagement.Api/Program.cs
   3. Roll back the EF migration (drop `Feedback`).
 
 ---
+## Review — completed 2026-10-07
+
+- [x] FeedbackEndpointsTests.cs — all 8 Test Plan cases (submit with rating+comment 201 w/ resolved CustomerName, rating-only 201 w/ null Comment, rating out of range 400, comment too long 400, agent/admin submit 403, customer list 403, admin/agent list paginated newest-first, invalid paging 400): added, passing
+- [x] Permission seeding — `feedback.submit` confirmed customer-only, `feedback.read` confirmed admin/agent-only: added, passing
 
 **STOP HERE. Report to the user and wait for confirmation before proceeding to Story 23.**
