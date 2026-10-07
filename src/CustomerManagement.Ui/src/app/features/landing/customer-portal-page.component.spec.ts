@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { FaqApiService } from '../../core/services/faq-api.service';
 import { FeedbackApiService } from '../../core/services/feedback-api.service';
@@ -54,6 +55,7 @@ describe('CustomerPortalPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [CustomerPortalPageComponent],
       providers: [
+        provideRouter([]),
         { provide: TicketManagementApiService, useClass: TicketManagementApiServiceStub },
         { provide: FaqApiService, useClass: FaqApiServiceStub },
         { provide: FeedbackApiService, useClass: FeedbackApiServiceStub }

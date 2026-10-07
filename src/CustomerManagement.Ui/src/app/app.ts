@@ -55,6 +55,8 @@ export class App {
       links.push({ label: 'Customer Portal', link: '/customer/portal' });
     }
 
+    links.push({ label: 'Knowledge Base', link: '/knowledge-base' });
+
     return links;
   });
 

@@ -194,6 +194,6 @@ public static class HelpArticleEndpoints
 - [x] HelpArticle entity, contracts, endpoints, DbContext wiring, Permissions.cs, IdentitySeedData.cs, Program.cs registration, EF migration (`Story24HelpArticlesApi`): added
 - [x] HelpArticleEndpointsTests.cs — all 8 Test Plan cases (admin create 201, non-admin create/update 403, customer list active-only even with `activeOnly=false`, agent/admin list active+retired, admin retire removes entry from customer list, stale RowVersion 409, unknown id 404, missing/too-long field validation) + permission-seeding test: added, passing
 - [x] TestAuthHandler.cs updated with `help-articles.read` (admin/agent/customer) and `help-articles.manage` (admin only)
-- [x] Full regression: `dotnet test CustomerSupportCRM.slnx` → 216/216 passing (200 pre-existing + 16 new)
+- [x] Full regression: `dotnet test CustomerSupportCRM.slnx` → 216/216 passing (200 pre-existing + 16 new) — solution-wide total: 157 `CustomerManagement.Api.Tests` + 59 `CustomerManagement.Gateway.Tests`
 
 **STOP HERE. Report to the user and wait for confirmation before proceeding to Story 25.**

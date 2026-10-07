@@ -43,7 +43,6 @@ import { QuickReplyAdminPanelComponent } from './components/quick-reply-admin-pa
           <h1>Agent Dashboard</h1>
           <p>Unified workspace for assigned tickets, tasks, notes, handoff requests, and quick replies.</p>
         </div>
-        <button type="button" (click)="reloadAll()" [disabled]="loading()">Refresh</button>
       </header>
 
       <p class="feedback error" *ngIf="error()">{{ error() }}</p>
@@ -102,7 +101,6 @@ import { QuickReplyAdminPanelComponent } from './components/quick-reply-admin-pa
         max-width: 1400px;
         margin: 1rem auto;
         padding: 1rem;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
 
       .page-header {
@@ -111,11 +109,12 @@ import { QuickReplyAdminPanelComponent } from './components/quick-reply-admin-pa
         align-items: flex-start;
         gap: 1rem;
         margin-bottom: 0.8rem;
+        flex-wrap: wrap;
       }
 
-      h1 { margin: 0; font-size: 1.6rem; color: #1b3a57; }
-      .page-header p { margin: 0.3rem 0 0; color: #506c88; }
-      .page-header button { border: 1px solid #7193ba; border-radius: 10px; background: #eef5fd; color: #1f4f84; padding: 0.5rem 0.9rem; }
+      h1 { margin: 0; font-size: 1.6rem; }
+      .page-header p { margin: 0.3rem 0 0; color: var(--color-text-muted); }
+      .page-header button:disabled { opacity: 0.6; cursor: not-allowed; }
 
       .layout {
         display: grid;

@@ -29,7 +29,7 @@ interface FaqTopicGroup {
     <section class="portal">
       <header class="portal-header">
         <h1>Customer Portal</h1>
-        <nav class="portal-nav">
+        <nav class="app-nav">
           <button type="button" [class.active]="section() === 'requests'" (click)="selectSection('requests')">
             My Requests
           </button>
@@ -160,20 +160,12 @@ interface FaqTopicGroup {
         max-width: 960px;
         margin: 2rem auto;
         padding: 1.2rem;
-        border-radius: 16px;
-        border: 1px solid #d7e4f1;
-        background: #fff;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        box-shadow: var(--shadow-card);
       }
       .portal-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; }
-      .portal-nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-      .portal-nav button {
-        border: 1px solid #afc4da;
-        background: #f4f9ff;
-        color: #1b4e79;
-        border-radius: 8px;
-        padding: 0.5rem 0.9rem;
-      }
-      .portal-nav button.active { background: #113a56; color: #fff; border-color: #113a56; }
       .status.error { color: #8a2d24; }
       .status.success { color: #1f6f43; }
       .panel { margin-top: 1.2rem; }
@@ -182,13 +174,13 @@ interface FaqTopicGroup {
       .request-list li button {
         width: 100%;
         text-align: left;
-        border: 1px solid #e0e8f1;
-        border-radius: 8px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
         background: #fbfdff;
         padding: 0.6rem;
       }
-      .request-list li.selected button { border-color: #113a56; background: #eaf2fb; }
-      .request-list small { display: block; color: #607588; margin-top: 0.2rem; }
+      .request-list li.selected button { border-color: var(--color-primary); background: #eaf2fb; }
+      .request-list small { display: block; color: var(--color-text-muted); margin-top: 0.2rem; }
       .request-detail { display: grid; gap: 0.8rem; }
       .attachments { border-top: 1px solid #e4edf6; padding-top: 0.8rem; }
       form { display: grid; gap: 0.7rem; max-width: 520px; }
@@ -200,9 +192,9 @@ interface FaqTopicGroup {
         font: inherit;
       }
       button[type='submit'] {
-        border: 1px solid #113a56;
-        border-radius: 8px;
-        background: #113a56;
+        border: 1px solid var(--color-primary-dark);
+        border-radius: var(--radius-md);
+        background: var(--color-primary-gradient);
         color: #fff;
         padding: 0.55rem 0.9rem;
         justify-self: start;

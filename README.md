@@ -31,6 +31,7 @@ first line of defense, not the sole security boundary.
 | Agent Dashboard | Implemented | `.squad/plans/agent-dashboard/` |
 | Ticket Conversation | Implemented | `.squad/plans/ticket-conversation/` |
 | Customer Portal | Implemented | `.squad/plans/customer-portal/` |
+| Knowledge Base (help articles, guides, unified search) | Implemented | `.squad/plans/knowledge-base/` |
 | Communication Channels (email, WhatsApp, live chat, SMS, web forms) | Planned next | `.squad/stories/communication-channels/` |
 
 ## Running locally
